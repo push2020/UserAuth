@@ -1,0 +1,38 @@
+.notfound {
+  &-container {
+    text-align: center;
+    padding: 50px;
+    min-height: 80vh;
+    max-height: 100vh;
+    background: linear-gradient(135deg, #ff7e5f, #feb47b);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  &-title {
+    font-size: 8rem;
+    margin: 0;
+    font-weight: bold;
+  }
+
+  &-message {
+    font-size: 1.5rem;
+    margin: 10px 0 30px;
+  }
+
+  &-link {
+    text-decoration: none;
+    background: white;
+    color: #ff7e5f;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: bold;
+    transition: 0.3s;
+  }
+
+  &-link:hover {
+    background: #ffe1d6;
+  }
+}
