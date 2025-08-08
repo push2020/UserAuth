@@ -1,0 +1,56 @@
+.footer {
+  background: #222;
+  color: white;
+  padding-top: 40px;
+  margin-top: 50px;
+
+  &-container {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 30px;
+    padding: 0 20px;
+  }
+
+  &-section {
+    max-width: 250px;
+  }
+
+  &-section h3,
+  &-section h4 {
+    margin-bottom: 15px;
+    color: #ff7e5f;
+  }
+
+  &-section p {
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  &-section ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  &-section ul li {
+    margin: 8px 0;
+  }
+
+  &-section ul li a {
+    text-decoration: none;
+    color: white;
+    transition: color 0.3s;
+  }
+
+  &-section ul li a:hover {
+    color: #ff7e5f;
+  }
+
+  &-bottom {
+    text-align: center;
+    background: #111;
+    padding: 15px;
+    font-size: 0.85rem;
+    margin-top: 20px;
+  }
+}
