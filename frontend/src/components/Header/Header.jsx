@@ -1,7 +1,10 @@
 import { Link } from "react-router-dom";
 import "../Header/Header.scss";
+import { useModal } from "../../utils/ModalContext.js";
 
 export const Header = () => {
+  const { openModal } = useModal();
+
   return (
     <header className="header">
       <div className="header-container">
@@ -37,9 +40,9 @@ export const Header = () => {
 
         {/* Call-to-Action Button */}
         <div className="cta">
-          <Link to="/login" className="cta-btn">
+          <div className="cta-btn" onClick={openModal}>
             Sign In
-          </Link>
+          </div>
         </div>
       </div>
     </header>
