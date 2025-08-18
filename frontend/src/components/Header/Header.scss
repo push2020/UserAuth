@@ -51,9 +51,13 @@
 
 /* CTA Button */
 .cta-btn {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  align-items: center;
   background: #ff7e5f;
   color: white;
-  padding: 8px 18px;
+  padding: 8px 16px;
   border-radius: 5px;
   text-decoration: none;
   font-weight: bold;
@@ -62,4 +66,10 @@
 
 .cta-btn:hover {
   background: #e96a4f;
+}
+
+.cta-user-logo {
+  display: block;
+  width: 20px;
+  height: 20px;
 }

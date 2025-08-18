@@ -1,9 +1,13 @@
 import { Link } from "react-router-dom";
 import "../Header/Header.scss";
-import { useModal } from "../../utils/ModalContext.js";
+import { useModal } from "../../context/ModalContext.jsx";
+import { AuthModal } from "../AuthModal/AuthModal.jsx";
+import { useAuth } from "../../context/AuthContext.jsx";
+import { ic_chevron_down } from "../../utils/iconSvg.jsx";
 
 export const Header = () => {
-  const { openModal } = useModal();
+  const { isModalOpen, openModal, closeModal } = useModal();
+  const { user, logout } = useAuth();
 
   return (
     <header className="header">
@@ -39,11 +43,24 @@ export const Header = () => {
         </nav>
 
         {/* Call-to-Action Button */}
-        <div className="cta">
-          <div className="cta-btn" onClick={openModal}>
-            Sign In
+        {user ? (
+          <div className="cta-btn">
+            <span>
+              <img
+                className="cta-user-logo"
+                src={user.image || "user_logo.png"}
+              ></img>
+            </span>
+            <span className="cta-user">{user.name}</span>
           </div>
-        </div>
+        ) : (
+          <div className="cta">
+            <div className="cta-btn" onClick={openModal}>
+              Sign In
+            </div>
+            <AuthModal isOpen={isModalOpen} onClose={closeModal} />
+          </div>
+        )}
       </div>
     </header>
   );

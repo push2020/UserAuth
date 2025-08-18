@@ -9,7 +9,7 @@ export const signup = async (req, res) => {
     if (user) {
       return res
         .status(409)
-        .json({ status: 409, message: "User already exist", success: false });
+        .json({ status: 409, message: "User already exist.", success: false });
     }
 
     const userModel = new UserModel({ name, email, password });
@@ -18,11 +18,11 @@ export const signup = async (req, res) => {
 
     res
       .status(201)
-      .json({ status: 200, message: "SignUp successfully", success: true });
+      .json({ status: 200, message: "SignUp successfully.", success: true });
   } catch (e) {
     res
       .status(500)
-      .json({ status: 500, message: "Internal server error", success: false });
+      .json({ status: 500, message: "Internal server error.", success: false });
   }
 };
 
@@ -33,13 +33,11 @@ export const login = async (req, res) => {
     if (!user) {
       return res
         .status(403)
-        .json({ status: 404, message: "Password is wrong" });
+        .json({ status: 403, message: "User Not Found. Please SignUp." });
     }
     const isEqual = await bcrypt.compare(password, user.password);
     if (!isEqual) {
-      return res
-        .status(403)
-        .json({ status: 404, message: "Password is wrong" });
+      return res.status(403).json({ status: 403, message: "Wrong Password." });
     }
 
     const jwtToken = jwt.sign(

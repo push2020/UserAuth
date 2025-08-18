@@ -6,8 +6,6 @@ import "../styles/Home.scss";
 export const Home = () => {
   return (
     <>
-      <Header />
-
       <div className="home-container">
         {/* Hero Section */}
         <section className="hero">
@@ -66,7 +64,6 @@ export const Home = () => {
             </div>
           </div>
         </section>
-
         <Footer />
       </div>
     </>

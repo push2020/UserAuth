@@ -19,7 +19,7 @@ const processRequest = async (
   }
 };
 
-class apiService {
+class APIService {
   getRequest(url, headers, successHandler, errorHandler) {
     const requestOptions = {
       method: "GET",
@@ -69,5 +69,7 @@ class apiService {
     processRequest(url, requestOptions, successHandler, errorHandler);
   }
 }
+
+const apiService = new APIService();
 
 export { apiService };
