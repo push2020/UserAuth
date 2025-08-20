@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "../Header/Header.scss";
 import { useModal } from "../../context/ModalContext.jsx";
 import { AuthModal } from "../AuthModal/AuthModal.jsx";
@@ -8,6 +8,7 @@ import { Prompt } from "../Prompt/Prompt.jsx";
 import OutSideClick from "../../hooks/useOutSideClick.jsx";
 
 export const Header = () => {
+  const navigate = useNavigate();
   const { isModalOpen, openModal, closeModal } = useModal();
   const { user, logout } = useAuth();
   const [isProfile, setIsProfile] = useState(false);
@@ -61,7 +62,7 @@ export const Header = () => {
                 <span>
                   <img
                     className="cta-user-logo"
-                    src={user.image || "user_logo.png"}
+                    src={user.image || "avatar.png"}
                   ></img>
                 </span>
                 <span className="cta-user">{user.name}</span>
@@ -69,7 +70,12 @@ export const Header = () => {
               {isProfile && (
                 <Prompt>
                   <div className="profile-list">
-                    <div className="profile-list-ls">Profile</div>
+                    <div
+                      className="profile-list-ls"
+                      onClick={() => navigate("/profile")}
+                    >
+                      Profile
+                    </div>
                     <div className="profile-list-ls" onClick={logout}>
                       LogOut
                     </div>

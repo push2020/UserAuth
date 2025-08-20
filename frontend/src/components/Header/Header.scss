@@ -32,6 +32,11 @@
   }
 }
 /* Navigation */
+.nav {
+  position: relative;
+  right: 5%;
+}
+
 .nav ul {
   display: flex;
   list-style: none;
