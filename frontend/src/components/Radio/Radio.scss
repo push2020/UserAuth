@@ -1,0 +1,42 @@
+.radiowrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  input[type="radio"] {
+    display: none;
+  }
+
+  input[type="radio"]:checked + .radio-mark {
+    background-color: #1e40af;
+    border: none;
+  }
+
+  input[type="radio"]:checked + .radio-mark::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 8px;
+    height: 8px;
+    background-color: var(--primary-color);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  &.disable {
+    &.disable {
+      opacity: 0.3;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+  }
+}
+
+.radio-mark {
+  width: 18px;
+  height: 18px;
+  border: 1px solid grey;
+  border-radius: 50%;
+  position: relative;
+}

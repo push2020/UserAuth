@@ -7,9 +7,11 @@ export const signup = async (req, res) => {
     const { name, email, password } = req.body;
     const user = await UserModel.findOne({ email });
     if (user) {
-      return res
-        .status(409)
-        .json({ status: 409, message: "User already exist.", success: false });
+      return res.status(409).json({
+        status: 409,
+        message: "User already exist. Please Login.",
+        success: false,
+      });
     }
 
     const userModel = new UserModel({ name, email, password });
@@ -18,7 +20,7 @@ export const signup = async (req, res) => {
 
     res
       .status(201)
-      .json({ status: 200, message: "SignUp successfully.", success: true });
+      .json({ status: 200, message: "Signed Up successfully.", success: true });
   } catch (e) {
     res
       .status(500)
@@ -31,13 +33,17 @@ export const login = async (req, res) => {
     const { email, password } = req.body;
     const user = await UserModel.findOne({ email });
     if (!user) {
-      return res
-        .status(403)
-        .json({ status: 403, message: "User Not Found. Please SignUp." });
+      return res.status(403).json({
+        status: 403,
+        message: "User Not Found. Please SignUp.",
+        success: false,
+      });
     }
     const isEqual = await bcrypt.compare(password, user.password);
     if (!isEqual) {
-      return res.status(403).json({ status: 403, message: "Wrong Password." });
+      return res
+        .status(403)
+        .json({ status: 403, message: "Invalid Password.", success: false });
     }
 
     const jwtToken = jwt.sign(
@@ -52,8 +58,11 @@ export const login = async (req, res) => {
       jwtToken,
       email,
       name: user.name,
+      success: true,
     });
   } catch (e) {
-    res.status(500).json({ message: "Internal server error", success: false });
+    res
+      .status(500)
+      .json({ status: 500, message: "Internal server error", success: false });
   }
 };

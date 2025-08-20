@@ -43,7 +43,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
         apiService.postRequest(url, header, body, successHandler, errorHandler);
       }
     } else {
-      setIsToast("Invalid Credentials.");
+      setIsToast({ message: "Invalid Credentials.", success: false });
     }
   };
 
@@ -51,18 +51,21 @@ export const AuthModal = ({ isOpen, onClose }) => {
     console.log("successs", res);
     if (isLogin) {
       AppConstants.Auth_Token = res.jwtToken;
-      localStorage.setItem("authToken", res.jwtToken);
-      login(res);
-      onClose();
+      localStorage.setItem("userProfile", JSON.stringify(res));
+      setIsToast(res);
+      setTimeout(() => {
+        login(res);
+        onClose();
+      }, 2000);
     } else {
-      setIsToast(res.message);
+      setIsToast(res);
       setIsLogin(true);
     }
   };
 
   const errorHandler = (error) => {
     console.log("errror", error);
-    setIsToast(error.message);
+    setIsToast(error);
   };
 
   const handleOnInputChange = (e) => {
@@ -150,10 +153,10 @@ export const AuthModal = ({ isOpen, onClose }) => {
 
       {isToast && (
         <ToastMessage
-          title="Login Failure"
-          body={isToast}
+          title={isToast.success ? "Login Success" : "Login Failure"}
+          body={isToast.message}
           onClose={handleCloseToast}
-          type="error"
+          type={!isToast.success ? "error" : ""}
         ></ToastMessage>
       )}
     </div>

@@ -3,11 +3,18 @@ import "../Header/Header.scss";
 import { useModal } from "../../context/ModalContext.jsx";
 import { AuthModal } from "../AuthModal/AuthModal.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
-import { ic_chevron_down } from "../../utils/iconSvg.jsx";
+import { useState } from "react";
+import { Prompt } from "../Prompt/Prompt.jsx";
+import OutSideClick from "../../hooks/useOutSideClick.jsx";
 
 export const Header = () => {
   const { isModalOpen, openModal, closeModal } = useModal();
   const { user, logout } = useAuth();
+  const [isProfile, setIsProfile] = useState(false);
+
+  const handleProfileClick = () => {
+    setIsProfile(true);
+  };
 
   return (
     <header className="header">
@@ -44,14 +51,32 @@ export const Header = () => {
 
         {/* Call-to-Action Button */}
         {user ? (
-          <div className="cta-btn">
-            <span>
-              <img
-                className="cta-user-logo"
-                src={user.image || "user_logo.png"}
-              ></img>
-            </span>
-            <span className="cta-user">{user.name}</span>
+          <div className="profile">
+            <OutSideClick
+              onOutsideClick={() => {
+                setIsProfile(false);
+              }}
+            >
+              <div className="cta-btn" onClick={handleProfileClick}>
+                <span>
+                  <img
+                    className="cta-user-logo"
+                    src={user.image || "user_logo.png"}
+                  ></img>
+                </span>
+                <span className="cta-user">{user.name}</span>
+              </div>
+              {isProfile && (
+                <Prompt>
+                  <div className="profile-list">
+                    <div className="profile-list-ls">Profile</div>
+                    <div className="profile-list-ls" onClick={logout}>
+                      LogOut
+                    </div>
+                  </div>
+                </Prompt>
+              )}
+            </OutSideClick>
           </div>
         ) : (
           <div className="cta">
