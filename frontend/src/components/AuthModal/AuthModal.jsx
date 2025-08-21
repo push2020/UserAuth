@@ -51,10 +51,11 @@ export const AuthModal = ({ isOpen, onClose }) => {
     console.log("successs", res);
     if (isLogin) {
       AppConstants.Auth_Token = res.jwtToken;
-      localStorage.setItem("userProfile", JSON.stringify(res));
+      localStorage.setItem("authToken", res.jwtToken);
+      localStorage.setItem("userProfile", JSON.stringify(res.user));
       setIsToast(res);
       setTimeout(() => {
-        login(res);
+        login(res.user);
         onClose();
       }, 2000);
     } else {

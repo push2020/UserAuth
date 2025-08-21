@@ -24,9 +24,12 @@ export const loginValidation = (req, res, next) => {
 
   const { error } = schema.validate(req.body);
   if (error) {
-    return res
-      .status(400)
-      .json({ status: 400, message: "Bad Request", errormessage: error });
+    return res.status(400).json({
+      code: 400,
+      message: "Invalid request data. Please check inputs.",
+      errormessage: error,
+      success: false,
+    });
   }
   next();
 };

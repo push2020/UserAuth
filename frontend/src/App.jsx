@@ -1,5 +1,5 @@
 import { BrowserRouter } from "react-router-dom";
-import "./Global.css";
+import "./Global.scss";
 import { AppRoutes } from "./routes/AppRoutes.jsx";
 import { ModalProvider } from "./context/ModalContext.jsx";
 import { Header } from "./components/Header/Header.jsx";

@@ -8,7 +8,9 @@ export const UserProfile = () => {
 
   if (!user) {
     return (
-      <p className="text-center mt-10">Please login to view your profile.</p>
+      <p className="profile-notfound text-center mt-10">
+        Please login to view your profile.
+      </p>
     );
   }
 
