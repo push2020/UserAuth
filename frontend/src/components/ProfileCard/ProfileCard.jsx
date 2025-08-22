@@ -1,7 +1,11 @@
 import React, { useRef, useState } from "react";
 import "./ProfileCard.scss";
+import AppConstants from "../../constants/AppConstants";
+import { apiService } from "../../services/apiservice";
+import { useAuth } from "../../context/AuthContext";
 
 export const ProfileCard = ({ user }) => {
+  const { updateUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState(user);
   const fileInputRef = useRef(null);
@@ -14,7 +18,23 @@ export const ProfileCard = ({ user }) => {
   const handleSave = () => {
     // TODO: Call API to save profile
     console.log("Updated user:", formData);
-    setIsEditing(false);
+    const { _id } = formData;
+    const url = AppConstants.Api_Domain + `api/user/${_id}`;
+    const headers = { "content-type": "application/json" };
+    const body = {
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      avatar: formData.avatar,
+      address: formData.address,
+    };
+    apiService.putRequest(
+      url,
+      headers,
+      JSON.stringify(body),
+      handleUpdateUserSuccess,
+      handleUpdateUserFailur
+    );
   };
 
   const handleAvatarClick = () => {
@@ -30,6 +50,13 @@ export const ProfileCard = ({ user }) => {
       setFormData((prev) => ({ ...prev, avatar: imageUrl }));
     }
   };
+
+  const handleUpdateUserSuccess = (res) => {
+    updateUser(res.data);
+    setIsEditing(false);
+  };
+
+  const handleUpdateUserFailur = () => {};
 
   return (
     <div className="profile-card">

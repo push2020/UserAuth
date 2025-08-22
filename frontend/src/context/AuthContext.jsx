@@ -17,6 +17,10 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const updateUser = (userData) => {
+    setUser(userData);
+  };
+
   const getUserDetails = (id) => {
     const url = AppConstants.Api_Domain + `api/user/${id}`;
     const headers = { "content-type": "application/json" };
@@ -48,7 +52,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

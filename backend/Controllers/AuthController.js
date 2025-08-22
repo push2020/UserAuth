@@ -27,7 +27,7 @@ export const signup = async (req, res) => {
     res.status(500).json({
       code: 500,
       message: "Internal server error. Please try again later.",
-      errormessage: e,
+      errormessage: e.message,
       success: false,
     });
   }
@@ -72,7 +72,7 @@ export const login = async (req, res) => {
     res.status(500).json({
       code: 500,
       message: "Internal server error. Please try again later",
-      errormessage: e,
+      errormessage: e.message,
       success: false,
     });
   }
