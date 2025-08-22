@@ -6,15 +6,25 @@ import { useAuth } from "../../context/AuthContext.jsx";
 import { useState } from "react";
 import { Prompt } from "../Prompt/Prompt.jsx";
 import OutSideClick from "../../hooks/useOutSideClick.jsx";
+import { useToast } from "../../context/ToastContext.jsx";
 
 export const Header = () => {
   const navigate = useNavigate();
   const { isModalOpen, openModal, closeModal } = useModal();
   const { user, logout } = useAuth();
+  const { showToast } = useToast();
   const [isProfile, setIsProfile] = useState(false);
 
   const handleProfileClick = () => {
     setIsProfile(true);
+  };
+
+  const handleLogoutClick = () => {
+    setIsProfile(false);
+    showToast({ title: "Signed Out", body: "Signed Out Successfully." });
+    setTimeout(() => {
+      logout();
+    }, 3000);
   };
 
   return (
@@ -72,11 +82,17 @@ export const Header = () => {
                   <div className="profile-list">
                     <div
                       className="profile-list-ls"
-                      onClick={() => navigate("/profile")}
+                      onClick={() => {
+                        setIsProfile(false);
+                        navigate("/profile");
+                      }}
                     >
                       Profile
                     </div>
-                    <div className="profile-list-ls" onClick={logout}>
+                    <div
+                      className="profile-list-ls"
+                      onClick={handleLogoutClick}
+                    >
                       LogOut
                     </div>
                   </div>

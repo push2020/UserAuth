@@ -5,11 +5,12 @@ import AppConstants from "../../constants/AppConstants.js";
 import { validationService } from "../../services/validationservice.js";
 import ToastMessage from "../ToastMessage/ToastMessage.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
+import { useToast } from "../../context/ToastContext.jsx";
 
 export const AuthModal = ({ isOpen, onClose }) => {
   const { login } = useAuth();
+  const { showToast } = useToast();
   const [isLogin, setIsLogin] = useState(true);
-  const [isToast, setIsToast] = useState(null);
   const [auth, setAuth] = useState({
     name: null,
     email: null,
@@ -17,7 +18,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
   });
 
   const { name, email, password } = auth;
-  const { isEmpty, isEmail, isName, isPassword } = validationService;
+  const { isEmail, isName, isPassword } = validationService;
   console.log("auth state", auth);
 
   const handleLoginClick = (e) => {
@@ -43,30 +44,40 @@ export const AuthModal = ({ isOpen, onClose }) => {
         apiService.postRequest(url, header, body, successHandler, errorHandler);
       }
     } else {
-      setIsToast({ message: "Invalid Credentials.", success: false });
+      showToast({
+        title: "Invalid Credentials.",
+        body: "Invalid request data. Please check inputs.",
+        type: "error",
+      });
     }
   };
 
   const successHandler = (res) => {
     console.log("successs", res);
+    showToast({
+      title: "Authentication Successful.",
+      body: res.message,
+    });
     if (isLogin) {
       AppConstants.Auth_Token = res.jwtToken;
       localStorage.setItem("authToken", res.jwtToken);
       localStorage.setItem("userProfile", JSON.stringify(res.user));
-      setIsToast(res);
       setTimeout(() => {
         login(res.user);
         onClose();
       }, 2000);
     } else {
-      setIsToast(res);
       setIsLogin(true);
     }
   };
 
   const errorHandler = (error) => {
     console.log("errror", error);
-    setIsToast(error);
+    showToast({
+      title: "Error Occured",
+      body: error.message,
+      type: "error",
+    });
   };
 
   const handleOnInputChange = (e) => {
@@ -93,10 +104,6 @@ export const AuthModal = ({ isOpen, onClose }) => {
       }
     }
     return res;
-  };
-
-  const handleCloseToast = () => {
-    setIsToast(null);
   };
 
   if (!isOpen) return null;
@@ -151,15 +158,6 @@ export const AuthModal = ({ isOpen, onClose }) => {
           </span>
         </p>
       </div>
-
-      {isToast && (
-        <ToastMessage
-          title={isToast.success ? "Login Success" : "Login Failure"}
-          body={isToast.message}
-          onClose={handleCloseToast}
-          type={!isToast.success ? "error" : ""}
-        ></ToastMessage>
-      )}
     </div>
   );
 };
