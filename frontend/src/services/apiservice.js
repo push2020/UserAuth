@@ -9,13 +9,15 @@ const processRequest = async (
     if (!response.ok) {
       const errorData = await response.json();
       errorHandler(errorData);
-      throw new error({ status: response.status, error: errorData });
+      throw new Error(
+        JSON.stringify({ status: response.status, error: errorData })
+      );
     } else {
       const result = await response.json();
       successHandler(result);
     }
-  } catch (error) {
-    console.log("Api process request error", error);
+  } catch (e) {
+    console.log("Api process request error", e);
   }
 };
 

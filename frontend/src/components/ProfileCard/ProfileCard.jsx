@@ -19,7 +19,7 @@ export const ProfileCard = ({ user }) => {
     // TODO: Call API to save profile
     console.log("Updated user:", formData);
     const { _id } = formData;
-    const url = AppConstants.Api_Domain + `api/user/${_id}`;
+    const url = AppConstants.Api_Domain + `api/user/update/${_id}`;
     const headers = { "content-type": "application/json" };
     const body = {
       name: formData.name,

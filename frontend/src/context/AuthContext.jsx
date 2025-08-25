@@ -23,7 +23,10 @@ export const AuthProvider = ({ children }) => {
 
   const getUserDetails = (id) => {
     const url = AppConstants.Api_Domain + `api/user/${id}`;
-    const headers = { "content-type": "application/json" };
+    const headers = {
+      "content-type": "application/json",
+      authorization: AppConstants.Auth_Token,
+    };
     apiService.getRequest(
       url,
       headers,
@@ -39,6 +42,12 @@ export const AuthProvider = ({ children }) => {
 
   const getUserErrorHandler = (error) => {
     console.log("get user error", error);
+    if (error) {
+      const { code } = error;
+      if (code === 419) {
+        logout();
+      }
+    }
   };
 
   useState(() => {
@@ -47,7 +56,7 @@ export const AuthProvider = ({ children }) => {
     if (user) {
       console.log("user Exist", user);
       AppConstants.Auth_Token = localStorage.getItem("authToken");
-      getUserDetails(user.id);
+      getUserDetails(user._id);
     }
   }, []);
 

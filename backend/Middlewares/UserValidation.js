@@ -1,4 +1,36 @@
+import jwt from "jsonwebtoken";
 import Joi from "joi";
+import UserModel from "../Models/user.js";
+
+export const userAuthentication = async (req, res, next) => {
+  let token = req.headers["authorization"];
+  if (!token) {
+    return res
+      .status(403)
+      .json({ code: 403, message: "No token, authorization denied" });
+  }
+
+  try {
+    //verify token
+    const decode = jwt.verify(token, process.env.JWT_SECRET);
+
+    req.user = await UserModel.findById(decode._id).select("-password");
+    if (!req.user) {
+      return res
+        .status(403)
+        .json({ code: 403, message: "User not found or unauthorized" });
+    }
+
+    next();
+  } catch (e) {
+    console.log("Auth error:", e);
+    return res.status(403).json({
+      code: e.name === "TokenExpiredError" ? 419 : 403,
+      message: "Token is not valid",
+      errormessage: e.message,
+    });
+  }
+};
 
 export const userValidation = (req, res, next) => {
   const schema = Joi.object({

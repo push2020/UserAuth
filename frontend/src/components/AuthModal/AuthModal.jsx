@@ -1,14 +1,13 @@
 import { useState } from "react";
 import "../AuthModal/AuthModal.scss";
-import { apiService } from "../../services/apiservice.js";
 import AppConstants from "../../constants/AppConstants.js";
+import { apiService } from "../../services/apiservice.js";
 import { validationService } from "../../services/validationservice.js";
-import ToastMessage from "../ToastMessage/ToastMessage.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { useToast } from "../../context/ToastContext.jsx";
 
 export const AuthModal = ({ isOpen, onClose }) => {
-  const { login } = useAuth();
+  const { login, logout } = useAuth();
   const { showToast } = useToast();
   const [isLogin, setIsLogin] = useState(true);
   const [auth, setAuth] = useState({
@@ -34,7 +33,9 @@ export const AuthModal = ({ isOpen, onClose }) => {
     if (isValid) {
       if (isLogin) {
         const url = AppConstants.Api_Domain + "auth/login";
-        const header = { "Content-Type": "application/json" };
+        const header = {
+          "Content-Type": "application/json",
+        };
         const body = JSON.stringify(data);
         apiService.postRequest(url, header, body, successHandler, errorHandler);
       } else {
@@ -61,11 +62,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
     if (isLogin) {
       AppConstants.Auth_Token = res.jwtToken;
       localStorage.setItem("authToken", res.jwtToken);
-      localStorage.setItem("userProfile", JSON.stringify(res.user));
-      setTimeout(() => {
-        login(res.user);
-        onClose();
-      }, 2000);
+      getUserDetails(res.user.id);
     } else {
       setIsLogin(true);
     }
@@ -78,6 +75,39 @@ export const AuthModal = ({ isOpen, onClose }) => {
       body: error.message,
       type: "error",
     });
+  };
+
+  const getUserDetails = (id) => {
+    const url = AppConstants.Api_Domain + `api/user/${id}`;
+    const headers = {
+      "content-type": "application/json",
+      authorization: AppConstants.Auth_Token,
+    };
+    apiService.getRequest(
+      url,
+      headers,
+      getUserSuccessHandler,
+      getUserErrorHandler
+    );
+  };
+
+  const getUserSuccessHandler = (res) => {
+    const { data } = res;
+    localStorage.setItem("userProfile", JSON.stringify(data));
+    setTimeout(() => {
+      login(data);
+      onClose();
+    }, 2000);
+  };
+
+  const getUserErrorHandler = (error) => {
+    console.log("get user error", error);
+    if (error) {
+      const { code } = error;
+      if (code === 419) {
+        logout();
+      }
+    }
   };
 
   const handleOnInputChange = (e) => {
