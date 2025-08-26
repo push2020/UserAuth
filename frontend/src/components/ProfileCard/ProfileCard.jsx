@@ -18,20 +18,23 @@ export const ProfileCard = ({ user }) => {
   const handleSave = () => {
     // TODO: Call API to save profile
     console.log("Updated user:", formData);
-    const { _id } = formData;
+    const { _id, name, email, phone, address, file } = formData;
+
+    const formDataObj = new FormData();
+    formDataObj.append("name", name);
+    formDataObj.append("email", email);
+    formDataObj.append("phone", phone);
+    formDataObj.append("address", address);
+
+    if (file) {
+      formDataObj.append("avatar", file); // multer will pick this
+    }
     const url = AppConstants.Api_Domain + `api/user/update/${_id}`;
-    const headers = { "content-type": "application/json" };
-    const body = {
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      avatar: formData.avatar,
-      address: formData.address,
-    };
+    const headers = { authorization: AppConstants.Auth_Token };
     apiService.putRequest(
       url,
       headers,
-      JSON.stringify(body),
+      formDataObj,
       handleUpdateUserSuccess,
       handleUpdateUserFailur
     );
@@ -47,7 +50,7 @@ export const ProfileCard = ({ user }) => {
     const file = e.target.files[0];
     if (file) {
       const imageUrl = URL.createObjectURL(file);
-      setFormData((prev) => ({ ...prev, avatar: imageUrl }));
+      setFormData((prev) => ({ ...prev, file: file, avatar: imageUrl }));
     }
   };
 
@@ -61,7 +64,11 @@ export const ProfileCard = ({ user }) => {
   return (
     <div className="profile-card">
       <img
-        src={formData.avatar || "avatar.png"}
+        src={
+          formData.avatar.includes("blob")
+            ? formData.avatar
+            : AppConstants.Api_Domain + formData.avatar || "avatar.png"
+        }
         alt="Profile Avatar"
         className="profile-avatar"
         onClick={handleAvatarClick}

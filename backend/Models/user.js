@@ -22,7 +22,10 @@ const UserSchema = new Schema(
       },
     },
     address: { type: String },
-    avatar: { type: String },
+    avatar: {
+      data: Buffer,
+      contentType: String,
+    },
   },
   { timestamps: true }
 );
