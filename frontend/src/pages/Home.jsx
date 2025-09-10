@@ -1,9 +1,27 @@
 import { Link } from "react-router-dom";
 import { Footer } from "../components/Footer/Footer.jsx";
-import { Header } from "../components/Header/Header.jsx";
 import "../styles/Home.scss";
+import { useEffect } from "react";
+import { apiService } from "../services/apiservice.js";
+import AppConstants from "../constants/AppConstants.js";
+import { useState } from "react";
 
 export const Home = () => {
+  const [homeState, setHomeState] = useState(null);
+
+  useEffect(() => {
+    const url = AppConstants.Api_Domain + "api/begin";
+    const headers = {};
+    apiService.getRequest(url, headers, successHandler, errorHandler);
+  }, []);
+
+  const successHandler = (res) => {
+    if (res) setHomeState(res.data);
+  };
+  const errorHandler = (error) => {
+    console.log("error in begin");
+  };
+
   return (
     <>
       <div className="home-container">
