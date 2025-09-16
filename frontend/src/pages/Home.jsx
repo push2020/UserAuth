@@ -37,7 +37,10 @@ export const Home = () => {
             </Link>
           </div>
           <div className="hero-image">
-            <img src="/images/hero-food.png" alt="Delicious food" />
+            <img
+              src="https://www.foodiesfeed.com/wp-content/uploads/ff-images/2025/08/flavorful-tacos-with-guacamole-and-beer.webp"
+              alt="Delicious food"
+            />
           </div>
         </section>
 
@@ -45,22 +48,13 @@ export const Home = () => {
         <section className="categories">
           <h2>Popular Categories</h2>
           <div className="category-list">
-            <div className="category-card">
-              <img src="/images/pizza.jpg" alt="Pizza" />
-              <p>Pizza</p>
-            </div>
-            <div className="category-card">
-              <img src="/images/burger.jpg" alt="Burger" />
-              <p>Burgers</p>
-            </div>
-            <div className="category-card">
-              <img src="/images/sushi.jpg" alt="Sushi" />
-              <p>Sushi</p>
-            </div>
-            <div className="category-card">
-              <img src="/images/indian.jpg" alt="Indian" />
-              <p>Indian</p>
-            </div>
+            {homeState?.popularDishes &&
+              homeState?.popularDishes.map(({ key, name, url }) => (
+                <div className="category-card" key={key}>
+                  <img src={url} alt="Pizza" />
+                  <p>{name}</p>
+                </div>
+              ))}
           </div>
         </section>
 

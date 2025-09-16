@@ -6,6 +6,7 @@ import "./Models/db.js";
 import AuthRouter from "./Routes/AuthRouter.js";
 import UserRouter from "./Routes/UserRouter.js";
 import ConfigRouter from "./Routes/ConfigRouter.js";
+import MenuRouter from "./Routes/MenuRouter.js";
 
 dotenv.config();
 const PORT = process.env.PORT || 8080;
@@ -17,6 +18,7 @@ app.use(bodyParser.json());
 app.use("/auth", AuthRouter);
 app.use("/api/user", UserRouter);
 app.use("/api", ConfigRouter);
+app.use("/menu", MenuRouter);
 
 app.listen(PORT, () => {
   console.log(`listening port ${PORT}`);

@@ -5,6 +5,7 @@ import { UserProfile } from "../pages/Userprofile";
 import { Dashboard } from "../pages/Dashboard";
 import { Setting } from "../pages/Setting";
 import { NotFound } from "../pages/NotFound";
+import { Menu } from "../pages/Menu";
 
 export const AppRoutes = () => {
   return (
@@ -14,6 +15,7 @@ export const AppRoutes = () => {
       <Route path="dashboard" element={<Dashboard />} />
       <Route path="profile" element={<UserProfile />} />
       <Route path="settings" element={<Setting />} />
+      <Route path="menu" element={<Menu />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
