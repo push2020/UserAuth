@@ -2,13 +2,15 @@ import { useEffect, useState } from "react";
 import "../styles/Menu.scss";
 import AppConstants from "../constants/AppConstants.js";
 import { apiService } from "../services/apiservice.js";
+import { useAuth } from "../context/AuthContext.jsx";
 
 export const Menu = () => {
   const [menu, setMenu] = useState(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     const url = AppConstants.Api_Domain + "menu";
-    const headers = {};
+    const headers = { authorization: AppConstants.Auth_Token };
     apiService.getRequest(url, headers, menuSuccessHandler, menuErrorHandler);
   }, []);
 
@@ -22,7 +24,15 @@ export const Menu = () => {
     console.log("menuErrorHandler", error);
   };
 
-  if (!menu) return <p>Loading menu...</p>;
+  if (!user) {
+    return (
+      <p className="profile-notfound text-center mt-10">
+        Please login to view your profile.
+      </p>
+    );
+  } else if (!menu) {
+    return <p>Loading menu...</p>;
+  }
 
   return (
     <div className="menu-page">

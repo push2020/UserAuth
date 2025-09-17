@@ -1,4 +1,3 @@
-import React from "react";
 import { ProfileCard } from "../components/ProfileCard/ProfileCard";
 import { useAuth } from "../context/AuthContext.jsx";
 import "../styles/UserProfile.scss";

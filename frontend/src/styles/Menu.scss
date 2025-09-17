@@ -6,13 +6,24 @@
   width: 100%;
   height: 100px;
   text-align: center;
-  background-image: url("/vegetables-set-left-black-slate.jpg");
-  background-size: cover;
+
   h1 {
     color: #ffffff;
     position: relative;
     top: 30px;
   }
+}
+
+.menu-header::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 100px;
+
+  background: url("/vegetables-set-left-black-slate.jpg") center/cover no-repeat;
+  filter: blur(2px); /* blur only background */
+  z-index: -1; /* keep it behind the text */
 }
 
 .menu-category {
