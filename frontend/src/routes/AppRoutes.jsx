@@ -6,6 +6,8 @@ import { Dashboard } from "../pages/Dashboard";
 import { Setting } from "../pages/Setting";
 import { NotFound } from "../pages/NotFound";
 import { Menu } from "../pages/Menu";
+import AboutPage from "../pages/About";
+import ContactPage from "../pages/ContactPage";
 
 export const AppRoutes = () => {
   return (
@@ -16,6 +18,8 @@ export const AppRoutes = () => {
       <Route path="profile" element={<UserProfile />} />
       <Route path="settings" element={<Setting />} />
       <Route path="menu" element={<Menu />} />
+      <Route path="about" element={<AboutPage />} />
+      <Route path="contact" element={<ContactPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

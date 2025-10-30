@@ -38,7 +38,7 @@ export const Home = () => {
           </div>
           <div className="hero-image">
             <img
-              src="https://www.foodiesfeed.com/wp-content/uploads/ff-images/2025/08/flavorful-tacos-with-guacamole-and-beer.webp"
+              src="/flavorful-tacos-with-guacamole-and-beer.webp"
               alt="Delicious food"
             />
           </div>

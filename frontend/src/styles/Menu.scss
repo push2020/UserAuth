@@ -22,8 +22,8 @@
   height: 100px;
 
   background: url("/vegetables-set-left-black-slate.jpg") center/cover no-repeat;
-  filter: blur(2px); /* blur only background */
-  z-index: -1; /* keep it behind the text */
+  filter: blur(2px);
+  z-index: -1;
 }
 
 .menu-category {
@@ -79,12 +79,21 @@
   color: red;
 }
 
+.add-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .add-btn {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
   margin-top: 10px;
   background-color: #ff5722;
   color: white;
   border: none;
-  padding: 8px 12px;
+  padding: 8px;
   border-radius: 6px;
   cursor: pointer;
   transition: background 0.3s ease;
@@ -92,4 +101,13 @@
 
 .add-btn:hover {
   background-color: #e64a19;
+}
+
+.add-btn-text {
+  padding: 0px 12px;
+}
+
+.add-btn-subtract,
+.add-btn-plus {
+  width: 20px;
 }
