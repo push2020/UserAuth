@@ -19,10 +19,10 @@
   position: absolute;
   left: 0;
   width: 100%;
-  height: 100px;
+  height: 110px;
 
   background: url("/vegetables-set-left-black-slate.jpg") center/cover no-repeat;
-  filter: blur(2px);
+  filter: blur(1px);
   z-index: -1;
 }
 
@@ -110,4 +110,8 @@
 .add-btn-subtract,
 .add-btn-plus {
   width: 20px;
+}
+
+.loader {
+  height: 85vh;
 }

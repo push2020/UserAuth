@@ -18,7 +18,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
 
   const { name, email, password } = auth;
   const { isEmail, isName, isPassword } = validationService;
-  console.log("auth state", auth);
+  // console.log("auth state", auth);
 
   const handleLoginClick = (e) => {
     e.preventDefault();

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import "../styles/Menu.scss";
 import AppConstants from "../constants/AppConstants.js";
 import { apiService } from "../services/apiservice.js";
@@ -12,18 +12,21 @@ export const Menu = () => {
   const { user } = useAuth();
 
   useEffect(() => {
+    if (!user) return;
     const url = AppConstants.Api_Domain + "menu";
     const headers = { authorization: AppConstants.Auth_Token };
     apiService.getRequest(url, headers, menuSuccessHandler, menuErrorHandler);
-  }, []);
+  }, [user]);
 
   const menuSuccessHandler = (res) => {
     const { data } = res;
+    console.log("menu handler sucess", data);
     setMenu(data);
   };
 
   const menuErrorHandler = (error) => {
     console.log("menuErrorHandler", error);
+    setMenu("error");
   };
 
   const addButtonHandler = (action, item) => {
@@ -37,13 +40,27 @@ export const Menu = () => {
     }));
   };
 
-  if (!user || !menu) {
-    return <Loader />;
-  } else if (!user) {
+  if (user === undefined) {
+    return (
+      <div className="loader">
+        <Loader />
+      </div>
+    );
+  }
+
+  if (!user) {
     return (
       <p className="profile-notfound text-center mt-10">
         Please login to view your profile.
       </p>
+    );
+  }
+
+  if (!menu) {
+    return (
+      <div className="loader">
+        <Loader />
+      </div>
     );
   }
 
@@ -53,13 +70,17 @@ export const Menu = () => {
         <div className="menu-header">
           <h1>Menu</h1>
         </div>
-        {menu.categories.map((category, idx) => (
+        {menu?.categories.map((category, idx) => (
           <div key={idx} className="menu-category">
             <h2>{category.name}</h2>
             <div className="menu-items">
               {category.items.map((item, i) => (
                 <div key={i} className="menu-item">
-                  <img src={item.image} alt={item.name} />
+                  <img
+                    src={item.image || menu.defaultImage}
+                    alt={item.name}
+                    onError={(e) => (e.target.src = menu.defaultImage)}
+                  />
                   <div className="item-info">
                     <h3>{item.name}</h3>
                     <p className="price">₹{item.price}</p>

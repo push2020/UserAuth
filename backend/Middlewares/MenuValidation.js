@@ -21,7 +21,7 @@ export const MenuValidation = async (req, res, next) => {
     next();
   } catch (error) {
     return res.status(403).json({
-      code: e.name === "TokenExpiredError" ? 419 : 403,
+      code: error.name === "TokenExpiredError" ? 419 : 403,
       message: "Token is not valid",
       errormessage: error.message,
     });

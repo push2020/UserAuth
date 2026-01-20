@@ -50,10 +50,10 @@ export const Home = () => {
           <div className="category-list">
             {homeState?.popularDishes &&
               homeState?.popularDishes.map(({ key, name, url }) => (
-                <div className="category-card" key={key}>
+                <Link to="/menu" className="category-card" key={key}>
                   <img src={url} alt="Pizza" />
                   <p>{name}</p>
-                </div>
+                </Link>
               ))}
           </div>
         </section>

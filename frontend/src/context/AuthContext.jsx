@@ -12,6 +12,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    AppConstants.Auth_Token = "";
     localStorage.removeItem("authToken");
     localStorage.removeItem("userProfile");
     setUser(null);
