@@ -3,17 +3,21 @@ import "../Header/Header.scss";
 import { useModal } from "../../context/ModalContext.jsx";
 import { AuthModal } from "../AuthModal/AuthModal.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
+import { useCart } from "../../context/CartContext.jsx";
 import { useState } from "react";
 import { Prompt } from "../Prompt/Prompt.jsx";
 import OutSideClick from "../../hooks/useOutSideClick.jsx";
 import { useToast } from "../../context/ToastContext.jsx";
+import { Cart } from "../Cart/Cart.jsx";
 
 export const Header = () => {
   const navigate = useNavigate();
   const { isModalOpen, openModal, closeModal } = useModal();
   const { user, logout } = useAuth();
+  const { itemCount } = useCart();
   const { showToast } = useToast();
   const [isProfile, setIsProfile] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   const handleProfileClick = () => {
     setIsProfile(true);
@@ -59,6 +63,15 @@ export const Header = () => {
             </li>
           </ul>
         </nav>
+
+        <div className="header-actions">
+        {/* Cart Icon */}
+        {user && (
+          <div className="cart-icon-container" onClick={() => setIsCartOpen(true)}>
+            <div className="cart-icon">🛒</div>
+            {itemCount > 0 && <span className="cart-badge">{itemCount}</span>}
+          </div>
+        )}
 
         {/* Call-to-Action Button */}
         {user ? (
@@ -108,7 +121,9 @@ export const Header = () => {
             <AuthModal isOpen={isModalOpen} onClose={closeModal} />
           </div>
         )}
+        </div>
       </div>
+      <Cart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </header>
   );
 };

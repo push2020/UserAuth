@@ -1,15 +1,21 @@
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import "../styles/Menu.scss";
 import AppConstants from "../constants/AppConstants.js";
 import { apiService } from "../services/apiservice.js";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useCart } from "../context/CartContext.jsx";
 import { Footer } from "../components/Footer/Footer.jsx";
 import Loader from "../components/Loader/Loader.jsx";
 
+// Helper function to generate itemId (must match backend)
+const generateItemId = (category, itemName) => {
+  return `${category}_${itemName}`.replace(/\s+/g, "_").toLowerCase();
+};
+
 export const Menu = () => {
   const [menu, setMenu] = useState(null);
-  const [items, setItems] = useState({});
   const { user } = useAuth();
+  const { cart, addToCart, updateQuantity, removeFromCart } = useCart();
 
   useEffect(() => {
     if (!user) return;
@@ -29,15 +35,35 @@ export const Menu = () => {
     setMenu("error");
   };
 
-  const addButtonHandler = (action, item) => {
-    console.log("add button clickec", "item", item.name);
-    const key = item._id;
-    let count = items[key] || 0;
+  // Get quantity for an item from cart
+  const getItemQuantity = (category, item) => {
+    if (!cart || !cart.items) return 0;
+    const itemId = generateItemId(category, item.name);
+    const cartItem = cart.items.find((ci) => ci.itemId === itemId);
+    return cartItem ? cartItem.quantity : 0;
+  };
 
-    setItems((prev) => ({
-      ...prev,
-      [key]: action === "subtract" ? count - 1 : count + 1,
-    }));
+  const addButtonHandler = (action, item, category) => {
+    const itemId = generateItemId(category, item.name);
+    const currentQuantity = getItemQuantity(category, item);
+
+    if (action === "add") {
+      if (currentQuantity === 0) {
+        // Add new item to cart
+        addToCart(item, category, 1);
+      } else {
+        // Update quantity
+        updateQuantity(itemId, currentQuantity + 1);
+      }
+    } else if (action === "subtract") {
+      if (currentQuantity > 1) {
+        // Decrease quantity
+        updateQuantity(itemId, currentQuantity - 1);
+      } else {
+        // Remove item from cart
+        removeFromCart(itemId);
+      }
+    }
   };
 
   if (user === undefined) {
@@ -90,24 +116,24 @@ export const Menu = () => {
                   </div>
                   <div className="add-container">
                     <button className="add-btn">
-                      {items[item._id] > 0 && (
+                      {getItemQuantity(category.name, item) > 0 && (
                         <div
                           className="add-btn-subtract"
-                          onClick={() => addButtonHandler("subtract", item)}
+                          onClick={() => addButtonHandler("subtract", item, category.name)}
                         >
                           -
                         </div>
                       )}
                       <div
-                        className={!items[item._id] ? "add-btn-text" : ""}
-                        onClick={() => addButtonHandler("add", item)}
+                        className={!getItemQuantity(category.name, item) ? "add-btn-text" : ""}
+                        onClick={() => addButtonHandler("add", item, category.name)}
                       >
-                        {items[item._id] ? items[item._id] : "Add"}
+                        {getItemQuantity(category.name, item) || "Add"}
                       </div>
-                      {items[item._id] > 0 && (
+                      {getItemQuantity(category.name, item) > 0 && (
                         <div
                           className="add-btn-plus"
-                          onClick={() => addButtonHandler("add", item)}
+                          onClick={() => addButtonHandler("add", item, category.name)}
                         >
                           +
                         </div>
