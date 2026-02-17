@@ -44,6 +44,10 @@ export const Menu = () => {
   };
 
   const addButtonHandler = (action, item, category) => {
+    // Remove the _id property of item
+    if (item && item._id) {
+      delete item._id;
+    }
     const itemId = generateItemId(category, item.name);
     const currentQuantity = getItemQuantity(category, item);
 
