@@ -3,6 +3,8 @@ import mongoose from "mongoose";
 const menuSchema = new mongoose.Schema(
   {
     restaurantId: { type: String },
+    /** Fallback when an item has no image. Use a Cloudinary URL from your media library. */
+    defaultImage: { type: String },
     categories: [
       {
         name: { type: String, required: true },

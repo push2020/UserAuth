@@ -7,6 +7,10 @@ export const getMenu = async (req, res) => {
       return res.status(404).json({ code: 404, message: "Document Not Found" });
     }
     const menu = menuData.toObject();
+    // Use existing Cloudinary image from env if no defaultImage in DB
+    if (!menu.defaultImage && process.env.CLOUDINARY_DEFAULT_MENU_IMAGE) {
+      menu.defaultImage = process.env.CLOUDINARY_DEFAULT_MENU_IMAGE;
+    }
     return res.json({
       code: 200,
       message: "Successfully Fetched",

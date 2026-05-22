@@ -4,6 +4,7 @@ import "../styles/Home.scss";
 import { useEffect } from "react";
 import { apiService } from "../services/apiservice.js";
 import AppConstants from "../constants/AppConstants.js";
+import { cloudinaryAssets } from "../constants/cloudinaryAssets.js";
 import { useState } from "react";
 
 export const Home = () => {
@@ -38,7 +39,7 @@ export const Home = () => {
           </div>
           <div className="hero-image">
             <img
-              src="/flavorful-tacos-with-guacamole-and-beer.webp"
+              src={cloudinaryAssets.heroImage}
               alt="Delicious food"
             />
           </div>

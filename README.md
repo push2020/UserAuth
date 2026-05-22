@@ -115,6 +115,21 @@ UserAuthentication/
 - `PUT /api/cart/item/:itemId` - Update cart item quantity
 - `DELETE /api/cart/item/:itemId` - Remove item from cart
 
+## Using existing Cloudinary images
+
+You can use images already in your [Cloudinary Media Library](https://cloudinary.com/console/media_library) without re-uploading.
+
+1. **Backend** (`backend/.env`):  
+   - `CLOUDINARY_DEFAULT_MENU_IMAGE` – full URL of the image to use when a menu item has no image.
+
+2. **Frontend** (`frontend/.env`):  
+   - `VITE_CLOUDINARY_HERO_IMAGE` – hero image on the home page.  
+   - `VITE_CLOUDINARY_LOGO` – logo in the header.
+
+Copy the image URL from Cloudinary (e.g. from the Media Library or asset details) and set the variable. Leave the variable empty to keep using local assets in `public/`.
+
+For **config** (banners, featured restaurants, popular dishes) and **menu item** images, store the full Cloudinary URL in the database; the app will display them as-is.
+
 ## Development
 
 The project uses:

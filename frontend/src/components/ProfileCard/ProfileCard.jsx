@@ -65,9 +65,13 @@ export const ProfileCard = ({ user }) => {
     <div className="profile-card">
       <img
         src={
-          formData.avatar.includes("blob")
+          formData.avatar?.includes("blob")
             ? formData.avatar
-            : AppConstants.Api_Domain + formData.avatar || "avatar.png"
+            : formData.avatar?.startsWith("http")
+              ? formData.avatar
+              : formData.avatar
+                ? (AppConstants.Api_Domain + formData.avatar).replace(/\/\/$/, "/")
+                : "/avatar.png"
         }
         alt="Profile Avatar"
         className="profile-avatar"

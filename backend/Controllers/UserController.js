@@ -1,4 +1,7 @@
 import UserModel from "../Models/user.js";
+import { uploadToCloudinary } from "../utils/cloudinaryUpload.js";
+
+const isAvatarUrl = (avatar) => typeof avatar === "string" && avatar.startsWith("http");
 
 export const getUser = async (req, res) => {
   try {
@@ -11,10 +14,15 @@ export const getUser = async (req, res) => {
     }
 
     const userObj = user.toObject();
-    delete userObj.avatar; // remove raw avatar buffer
-
-    if (user.avatar && user.avatar.data) {
-      userObj.avatar = `api/user/avatar/${user._id}`;
+    // Expose avatar: Cloudinary URL as-is, legacy buffer as API path
+    if (user.avatar) {
+      if (isAvatarUrl(user.avatar)) {
+        userObj.avatar = user.avatar;
+      } else if (user.avatar.data) {
+        userObj.avatar = `api/user/avatar/${user._id}`;
+      }
+    } else {
+      delete userObj.avatar;
     }
 
     return res.json({
@@ -36,13 +44,17 @@ export const updateUser = async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
 
-    // if avatar uploaded
-    console.log("req.file", req.file);
     if (req.file) {
-      updates.avatar = {
-        data: req.file.buffer,
-        contentType: req.file.mimetype,
-      };
+      try {
+        const { url } = await uploadToCloudinary(req.file.buffer, "avatars");
+        updates.avatar = url;
+      } catch (err) {
+        return res.status(500).json({
+          code: 500,
+          message: "Image upload failed. Please try again.",
+          errormessage: err?.message || "Cloudinary upload error",
+        });
+      }
     }
 
     const updateUser = await UserModel.findByIdAndUpdate(id, updates, {
@@ -55,10 +67,13 @@ export const updateUser = async (req, res) => {
         .json({ code: 404, message: "User not found. Please sign up first." });
     }
 
-    // generate avatar URL if it exists
     const userObj = updateUser.toObject();
-    if (updateUser.avatar && updateUser.avatar.data) {
-      userObj.avatar = `api/user/avatar/${updateUser._id}`;
+    if (updateUser.avatar) {
+      userObj.avatar = isAvatarUrl(updateUser.avatar)
+        ? updateUser.avatar
+        : updateUser.avatar?.data
+          ? `api/user/avatar/${updateUser._id}`
+          : updateUser.avatar;
     }
 
     return res.json({
@@ -76,14 +91,24 @@ export const updateUser = async (req, res) => {
 };
 
 export const getAvatar = async (req, res) => {
-  const user = await UserModel.findById(req.params.id);
   try {
-    if (!user || !user.avatar || !user.avatar.data) {
+    const user = await UserModel.findById(req.params.id);
+    if (!user || !user.avatar) {
       return res.status(404).send("No avatar found");
     }
 
-    res.set("Content-Type", user.avatar.contentType);
-    res.send(user.avatar.data);
+    // Cloudinary URL: redirect to the image
+    if (isAvatarUrl(user.avatar)) {
+      return res.redirect(302, user.avatar);
+    }
+
+    // Legacy buffer storage
+    if (user.avatar.data) {
+      res.set("Content-Type", user.avatar.contentType);
+      return res.send(user.avatar.data);
+    }
+
+    return res.status(404).send("No avatar found");
   } catch (e) {
     res.status(500).send("Error retrieving avatar");
   }

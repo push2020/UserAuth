@@ -22,9 +22,10 @@ const UserSchema = new Schema(
       },
     },
     address: { type: String },
+    // Avatar: either Cloudinary URL (string) or legacy { data: Buffer, contentType: String }
     avatar: {
-      data: Buffer,
-      contentType: String,
+      type: mongoose.Schema.Types.Mixed,
+      default: undefined,
     },
   },
   { timestamps: true }

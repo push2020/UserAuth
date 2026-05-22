@@ -9,6 +9,8 @@ import { Prompt } from "../Prompt/Prompt.jsx";
 import OutSideClick from "../../hooks/useOutSideClick.jsx";
 import { useToast } from "../../context/ToastContext.jsx";
 import { Cart } from "../Cart/Cart.jsx";
+import AppConstants from "../../constants/AppConstants.js";
+import { cloudinaryAssets } from "../../constants/cloudinaryAssets.js";
 
 export const Header = () => {
   const navigate = useNavigate();
@@ -36,10 +38,10 @@ export const Header = () => {
       <div className="header-container">
         {/* Logo */}
         <div className="logo">
-          <Link to="/">
+            <Link to="/">
             <img
               className="logo-icon"
-              src="food_express.png"
+              src={cloudinaryAssets.logo}
               alt="FoodExpress"
             />
             <span>FoodExpress</span>
@@ -85,7 +87,13 @@ export const Header = () => {
                 <span>
                   <img
                     className="cta-user-logo"
-                    src={user.image || "avatar.png"}
+                    src={
+                  user.avatar
+                    ? user.avatar.startsWith("http")
+                      ? user.avatar
+                      : (AppConstants.Api_Domain + user.avatar).replace(/\/\/$/, "/")
+                    : "/avatar.png"
+                }
                   ></img>
                 </span>
                 <span className="cta-user">{user.name}</span>
