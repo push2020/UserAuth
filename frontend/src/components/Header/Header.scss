@@ -1,142 +1,507 @@
+// =====================================================================
+// Header
+// Frosted glass shell with scroll-aware opacity, animated nav underlines,
+// SVG cart icon with a pulse-on-change badge, and a polished profile chip.
+// Matches the Home page palette.
+// =====================================================================
+
+$primary: #ff6b35;
+$primary-soft: #ff8c5a;
+$primary-deep: #e0531f;
+$accent: #ffd166;
+$ink: #14141a;
+$mute: #6f6f7a;
+$paper: #ffffff;
+$paper-2: #f6f4ef;
+$line: rgba(0, 0, 0, 0.08);
+$ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
 .header {
-  background: white;
-  padding: 15px 20px 15px 0px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   position: sticky;
   top: 0;
   z-index: 100;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: saturate(160%) blur(18px);
+  -webkit-backdrop-filter: saturate(160%) blur(18px);
+  border-bottom: 1px solid transparent;
+  transition:
+    background 0.3s $ease-out,
+    border-color 0.3s $ease-out,
+    box-shadow 0.3s $ease-out;
+
+  &.is-scrolled {
+    background: rgba(255, 255, 255, 0.92);
+    border-bottom-color: $line;
+    box-shadow: 0 10px 30px -18px rgba(0, 0, 0, 0.18);
+  }
 }
 
 .header-container {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding-inline: clamp(16px, 4vw, 36px);
+  height: 72px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
+  transition: height 0.3s $ease-out;
+
+  .header.is-scrolled & {
+    height: 64px;
+  }
 }
+
+// ---------- Logo ----------
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: $ink;
+  font-weight: 700;
+  font-size: 1.2rem;
+  letter-spacing: -0.01em;
+  transition: transform 0.3s $ease-out;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary;
+    outline-offset: 4px;
+    border-radius: 6px;
+  }
+
+  .logo-icon {
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 10px rgba(255, 107, 53, 0.25));
+  }
+
+  .logo-text {
+    background: linear-gradient(135deg, $primary, $primary-deep);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+// ---------- Navigation ----------
+
+.nav {
+  display: flex;
+  align-items: center;
+
+  ul {
+    display: flex;
+    list-style: none;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+.nav-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  color: $ink;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border-radius: 10px;
+  transition: color 0.25s $ease-out, background 0.25s $ease-out;
+
+  &:hover {
+    color: $primary;
+    background: rgba(255, 107, 53, 0.06);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary;
+    outline-offset: 2px;
+  }
+
+  &.is-active {
+    color: $primary;
+  }
+
+  .nav-underline {
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    bottom: 2px;
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, $primary, $accent);
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    transition: transform 0.4s $ease-out;
+  }
+
+  &:hover .nav-underline,
+  &.is-active .nav-underline {
+    transform: scaleX(1);
+  }
+}
+
+// ---------- Actions cluster ----------
 
 .header-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 10px;
 }
 
-/* Logo */
-.logo a {
-  text-decoration: none;
-  font-size: 1.8rem;
-  font-weight: bold;
-  color: #ff7e5f;
+// ---------- Cart button ----------
 
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  text-align: center;
-
-  img {
-    width: 80px;
-    background-repeat: no-repeat;
-    background-size: cover;
-  }
-}
-/* Navigation */
-.nav {
+.cart-button {
   position: relative;
-  right: 7%;
-}
-
-.nav ul {
-  display: flex;
-  list-style: none;
-  gap: 25px;
-}
-
-.nav ul li a {
-  text-decoration: none;
-  font-size: 1rem;
-  color: #333;
-  transition: color 0.3s;
-}
-
-.nav ul li a:hover {
-  color: #ff7e5f;
-}
-
-/* CTA Button */
-.cta-btn {
-  display: flex;
-  flex-direction: row;
-  gap: 8px;
-  align-items: center;
-  background: #ff7e5f;
-  color: white;
-  padding: 8px 16px;
-  border-radius: 5px;
-  text-decoration: none;
-  font-weight: bold;
-  transition: background 0.3s;
-}
-
-.cta-btn:hover {
-  background: #e96a4f;
-}
-
-.cta-user-logo {
-  display: block;
-  width: 20px;
-  height: 20px;
-}
-
-.profile {
-  position: relative;
-  cursor: pointer;
-}
-
-.profile-list {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 10px;
-
-  div {
-    display: flex;
-    align-items: center;
-  }
-}
-
-/* Cart Icon */
-.cart-icon-container {
-  position: relative;
-  cursor: pointer;
-  margin-right: 15px;
-  padding: 8px;
-  border-radius: 8px;
-  transition: background 0.2s;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: rgba(0, 0, 0, 0.03);
+  color: $ink;
+  transition:
+    background 0.25s $ease-out,
+    border-color 0.25s $ease-out,
+    transform 0.25s $ease-out;
 
   &:hover {
-    background: #f5f5f5;
+    background: rgba(255, 107, 53, 0.08);
+    border-color: rgba(255, 107, 53, 0.18);
+    color: $primary;
+    transform: translateY(-1px);
   }
-}
 
-.cart-icon {
-  font-size: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  &:focus-visible {
+    outline: 2px solid $primary;
+    outline-offset: 2px;
+  }
 }
 
 .cart-badge {
   position: absolute;
-  top: 0;
-  right: 0;
-  background: #ff5722;
-  color: white;
-  border-radius: 50%;
-  width: 20px;
+  top: -4px;
+  right: -4px;
+  min-width: 20px;
   height: 20px;
-  display: flex;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, $primary, $primary-soft);
+  color: $paper;
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
-  font-weight: bold;
-  transform: translate(25%, -25%);
+  box-shadow: 0 4px 12px -4px rgba(255, 107, 53, 0.6);
+  transition: transform 0.2s $ease-out;
+
+  &.is-bump {
+    animation: badge-bump 0.42s $ease-out;
+  }
+}
+
+@keyframes badge-bump {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.35); }
+  60% { transform: scale(0.92); }
+  100% { transform: scale(1); }
+}
+
+// ---------- Sign-in CTA (unauthenticated) ----------
+
+.sign-in-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 22px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, $primary, $primary-soft);
+  color: $paper;
+  font-weight: 600;
+  font-size: 0.95rem;
+  box-shadow: 0 10px 22px -10px rgba(255, 107, 53, 0.6);
+  overflow: hidden;
+  transition:
+    transform 0.3s $ease-out,
+    box-shadow 0.3s $ease-out;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, $accent, $primary);
+    opacity: 0;
+    transition: opacity 0.3s $ease-out;
+  }
+
+  span,
+  & > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px -10px rgba(255, 107, 53, 0.7);
+
+    &::before {
+      opacity: 1;
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid $accent;
+    outline-offset: 3px;
+  }
+}
+
+// ---------- Profile chip + dropdown ----------
+
+.profile {
+  position: relative;
+}
+
+.user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 12px 4px 4px;
+  border: 1px solid $line;
+  border-radius: 999px;
+  background: $paper;
+  color: $ink;
+  font-weight: 500;
+  font-size: 0.92rem;
+  transition:
+    background 0.25s $ease-out,
+    border-color 0.25s $ease-out,
+    transform 0.25s $ease-out,
+    box-shadow 0.25s $ease-out;
+
+  &:hover,
+  &.is-active {
+    border-color: rgba(255, 107, 53, 0.4);
+    background: rgba(255, 107, 53, 0.04);
+    box-shadow: 0 6px 16px -10px rgba(255, 107, 53, 0.5);
+  }
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary;
+    outline-offset: 2px;
+  }
+
+  .user-chip-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: linear-gradient(135deg, $primary, $accent);
+    padding: 2px;
+    flex-shrink: 0;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+      background: $paper;
+      display: block;
+    }
+  }
+
+  .user-chip-name {
+    max-width: 140px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .user-chip-chevron {
+    display: inline-flex;
+    transition: transform 0.3s $ease-out;
+    color: $mute;
+
+    &.is-flipped {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+// Override the generic Prompt sizing for the profile menu placement.
+.profile .prompt {
+  top: calc(100% + 10px);
+  right: 0;
+  width: 200px;
+  padding: 6px;
+  border: 1px solid $line;
+  box-shadow: 0 20px 40px -16px rgba(0, 0, 0, 0.2);
+  animation: dropdown-in 0.22s $ease-out;
+  transform-origin: top right;
+}
+
+@keyframes dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.profile-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.profile-menu-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: $ink;
+  font-size: 0.92rem;
+  font-weight: 500;
+  text-align: left;
+  transition: background 0.2s $ease-out, color 0.2s $ease-out;
+
+  &:hover {
+    background: rgba(255, 107, 53, 0.08);
+    color: $primary;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary;
+    outline-offset: -2px;
+  }
+
+  &.is-destructive {
+    color: #c4392f;
+
+    &:hover {
+      background: rgba(196, 57, 47, 0.08);
+      color: #a82a22;
+    }
+  }
+}
+
+// ---------- Mobile toggle + responsive nav ----------
+
+.menu-toggle {
+  display: none;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid $line;
+  background: $paper;
+  color: $ink;
+  transition: background 0.25s $ease-out, color 0.25s $ease-out;
+
+  &:hover {
+    background: rgba(255, 107, 53, 0.08);
+    color: $primary;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary;
+    outline-offset: 2px;
+  }
+}
+
+@media (max-width: 860px) {
+  .menu-toggle {
+    display: grid;
+  }
+
+  .nav {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-bottom: 1px solid $line;
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.35s $ease-out;
+
+    &.is-open {
+      max-height: 360px;
+      box-shadow: 0 20px 30px -20px rgba(0, 0, 0, 0.18);
+    }
+
+    ul {
+      flex-direction: column;
+      gap: 0;
+      padding: 12px clamp(16px, 4vw, 36px) 20px;
+    }
+  }
+
+  .nav-link {
+    display: flex;
+    justify-content: space-between;
+    padding: 14px 12px;
+    border-radius: 12px;
+    font-size: 1rem;
+
+    .nav-underline {
+      display: none;
+    }
+
+    &.is-active {
+      background: rgba(255, 107, 53, 0.08);
+    }
+  }
+
+  .user-chip .user-chip-name {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .sign-in-btn {
+    padding: 8px 16px;
+    font-size: 0.88rem;
+  }
+}
+
+// ---------- Reduced motion ----------
+
+@media (prefers-reduced-motion: reduce) {
+  .header,
+  .header-container,
+  .logo,
+  .nav-link,
+  .nav-underline,
+  .cart-button,
+  .cart-badge,
+  .sign-in-btn,
+  .user-chip,
+  .user-chip-chevron,
+  .profile-menu-item,
+  .nav {
+    transition: none;
+    animation: none;
+  }
 }

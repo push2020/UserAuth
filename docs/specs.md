@@ -116,24 +116,40 @@ Every screen below must specify each of these six states. Implementations that s
 
 **Route:** `/`
 
-**Goal:** Introduce FoodExpress, surface popular categories, route the visitor to the menu.
+**Goal:** Introduce FoodExpress, surface popular categories, route the visitor to the menu — with a cinematic, motion-driven presentation modelled after premium product pages.
 
-**Sections**
+**Sections (top to bottom)**
 
-1. **Hero** — heading "Delicious food, delivered to your door", supporting copy, "Order Now" CTA → `/menu`. Hero image from `VITE_CLOUDINARY_HERO_IMAGE` env var, falls back to local asset.
-2. **Popular Categories** — grid of category cards fetched from `GET /api/begin`. Each card: image, category name, click → `/menu`.
-3. **How It Works** — three static steps: Browse → Place Order → Get Delivered.
+1. **Scroll-progress bar** — fixed at the top of the viewport, scales horizontally with scroll position; gradient (`#ff6b35 → #ffd166`); decorative (`aria-hidden="true"`); height 3 px.
+2. **Cinematic hero** —
+   - Full-viewport dark gradient background with three drifting blurred orbs (primary / accent / pink) and a faint dot-grid overlay masked to the centre.
+   - Eyebrow chip: "Now delivering in your city" with a pulsing dot.
+   - Headline "Delicious food, delivered to your door." rendered word-by-word with staggered fade-in/slide-up; final word "door." carries a warm orange→yellow gradient. The full heading is also exposed via `aria-label` so screen readers receive it as a single phrase.
+   - Sub-copy, "Order now" primary CTA → `/menu`, "Learn more" ghost CTA → `/about`.
+   - Hero image (from `VITE_CLOUDINARY_HERO_IMAGE`, falls back to local asset) with a mouse-tracking 3D tilt (rotateX/rotateY based on cursor position; ±8°) and an animated gradient glow halo.
+   - Two floating glassmorphism info cards: rating ("4.9★ — 50K+ reviews") and ETA ("~28 min — Avg ETA"). Hidden on screens < 600 px.
+3. **Marquee** — horizontal auto-scrolling band on a dark background, listing food categories. Decorative (`aria-hidden="true"`).
+4. **Stats grid** — 4 animated counters (`30 min`, `10K+`, `500+`, `4.9★`) that count up via `requestAnimationFrame` with an ease-out cubic curve once the section enters the viewport. Each runs once.
+5. **Popular Categories** — grid of category cards fetched from `GET /api/begin`. Each card: image (with `loading="lazy"`), category name, arrow icon → `/menu`. On hover: lift, shadow expand, image zoom (1.08×), arrow morph to filled primary circle. Cards stagger their reveal by 60 ms each.
+6. **How It Works** — three steps in a grid with a soft gradient connector line behind them. Each step has a numbered badge ("01", "02", "03") with a primary gradient fill. Cards reveal with 120 ms stagger.
+7. **Final CTA** — full-bleed dark section with a real-time mouse-tracking radial spotlight (600 px circle of warm orange light following the cursor). Heading uses a white→translucent gradient. Primary CTA → `/menu`.
+
+**Motion & effects (cross-cutting on this page)**
+
+- **Scroll-reveal:** every element marked `data-reveal` fades up (`translateY(28px) → 0`, `opacity 0 → 1`) over 0.9 s once it enters the viewport. Implemented with a single `IntersectionObserver` (threshold 0.15, root margin `-60px` bottom). Each target is unobserved after revealing — no re-trigger.
+- **Reduced motion:** if `prefers-reduced-motion: reduce` is set, all decorative animations (scroll-reveal, orb drift, marquee, image tilt, spotlight tracking, counter count-up, pulsing dot, floating cards) are disabled. Counters jump straight to their final value. The marquee renders static. The page remains fully functional.
+- **GPU-friendly only:** all animations use `transform` and `opacity`. No layout-thrashing properties are animated.
 
 **State coverage**
 
 | State | Behaviour |
 |-------|-----------|
-| Default | Hero, popular categories grid, How It Works |
-| Empty | Popular Categories returns `[]` → hide the section entirely (do not show an empty grid) |
-| Loading | Skeleton tiles for the category grid after 200 ms |
-| Error | Category grid replaced by inline error card with "Retry" button; rest of page still renders |
-| Null fields | Category with no image → render named placeholder tile; never broken `<img>` |
-| Unauthenticated | Page is fully accessible; "Order Now" still routes to `/menu` (Menu page itself handles the gated state) |
+| Default | All sections render in full with motion enabled |
+| Empty | Popular Categories returns `[]` → hide the section entirely (do not show an empty grid). Other sections remain |
+| Loading | Stats counters start at 0 and animate up on viewport entry; categories grid not rendered until data arrives |
+| Error | `GET /api/begin` failure → popular dishes set to `[]`; Categories section is hidden. The rest of the page still renders. (Inline error card with "Retry" is out of scope for the v1 motion pass; tracked for follow-up.) |
+| Null fields | Category with no image → broken `<img>` is currently possible because the API contract guarantees `url`. Add `onError` fallback before this is treated as production-hardened |
+| Unauthenticated | Page is fully accessible; CTAs route to `/menu` (Menu page itself handles the gated state) |
 
 ---
 
@@ -293,27 +309,61 @@ All require JWT. All mutations return the updated cart; client replaces local st
 
 ### 3.8 Header
 
-**Always visible** on every route.
+**Always visible** on every route. Sticky to the top of the viewport with `z-index: 100`.
 
-**Contents**
+**Visual shell**
 
-- Logo + "FoodExpress" wordmark — clickable, routes to `/`.
-- Primary nav: Home, Menu, About Us, Contact. Active route is visually indicated and announced via `aria-current="page"`.
-- Cart icon with item-count badge — visible only when authenticated. Opens Cart drawer.
-- User area:
-  - **Authenticated:** Avatar + name (via `displayName`) → opens dropdown with "Profile" and "Sign Out".
-  - **Unauthenticated:** "Sign In" button → opens AuthModal.
+- Frosted-glass background — `rgba(255, 255, 255, 0.7)` + `backdrop-filter: saturate(160%) blur(18px)`. Bleeds through the section behind it (subtle on dark hero, near-white on light pages).
+- **Scroll-aware:** once `window.scrollY > 30`, the header adds `.is-scrolled`:
+  - Background becomes `rgba(255, 255, 255, 0.92)`.
+  - Bottom border + soft drop shadow appear.
+  - Container height shrinks from 72 px → 64 px.
+- Container max-width: 1240 px. Fluid horizontal padding `clamp(16px, 4vw, 36px)`.
+
+**Contents (left → right)**
+
+1. **Logo** — circular badge image (`logo-icon`) with a warm drop shadow, next to a gradient-text "FoodExpress" wordmark (`#ff6b35 → #e0531f`). Clickable, routes to `/`. Slight lift on hover.
+2. **Primary nav** — Home, Menu, About, Contact. Each link:
+   - Pill-shaped on hover (`rgba(255, 107, 53, 0.06)` background).
+   - Animated gradient underline that scales in from the left on hover and stays scaled when active.
+   - Active route detected via `useLocation` — exact match on `/`, prefix match for others. Announced via `aria-current="page"`.
+3. **Actions cluster** (right side, gap 10 px):
+   - **Cart button** (authenticated only) — 42 × 42 px rounded square; outline SVG cart glyph (no emoji per the icon rule); subtle background on hover. Badge in the top-right shows count (clamped to `99+`); badge pulses (`scale 1 → 1.35 → 0.92 → 1` over 420 ms) whenever the count changes. Hidden when signed out. `aria-label` reads `"Open cart, N items"` (singular/plural).
+   - **User chip** (authenticated only) — pill containing a circular avatar (resolved via `resolveAvatar`, falls back to `/avatar.png`), the user's name (truncated to 140 px), and a chevron that flips 180° when the dropdown is open. `aria-haspopup="menu"`, `aria-expanded`. Hover lifts and warms the border.
+   - **Profile dropdown** — anchored top-right under the chip, 200 px wide, white card with soft shadow. Animates in (fade + scale `0.96 → 1` + drop `-6px → 0`) over 220 ms. Items: "View profile" (navigates to `/profile`) and "Sign out" (destructive — red text, red-tinted hover; shows a toast then logs out after 2 s). Closes on outside click or route change.
+   - **Sign-in button** (unauthenticated only) — gradient pill (`primary → primary-soft` with `accent` over on hover), glowing shadow, lifts on hover. Opens AuthModal.
+   - **Menu toggle** (mobile only) — hamburger icon that morphs to a close X when the mobile nav drawer is open.
+
+**Responsive behaviour**
+
+- **≤ 860 px:** primary nav collapses into a drawer below the header. Hamburger button toggles it. Drawer animates open via `max-height` (0 → 360 px) with a soft shadow. Nav links stack vertically with larger tap targets (44+ px height). User-chip name is hidden — avatar only. Drawer auto-closes on route change.
+- **≤ 480 px:** Sign-in button uses a smaller padding/font size.
+
+**Motion**
+
+- All transitions use a single shared `cubic-bezier(0.16, 1, 0.3, 1)` easing.
+- Cart-badge pulse is keyed to `itemCount` changes via a 420 ms `is-bump` class toggled in a `useEffect`.
+- `prefers-reduced-motion: reduce` disables all transitions and animations in the header.
+
+**Accessibility**
+
+- All interactive elements are `<button>` or `<a>` (no clickable `<div>`s).
+- Cart button has descriptive `aria-label`.
+- Nav uses `aria-label="Primary"`; active link uses `aria-current="page"`.
+- User chip uses `aria-haspopup="menu"` and `aria-expanded`; dropdown uses `role="menu"` and `role="menuitem"`.
+- Logo image has empty `alt=""` because the adjacent wordmark already labels the link, which carries `aria-label="FoodExpress home"`.
+- Every focusable element has a visible `:focus-visible` ring (2 px primary, 2–4 px offset).
 
 **State coverage**
 
 | State | Behaviour |
 |-------|-----------|
-| Default | All elements as above |
+| Default | All elements render as above; scroll-aware shell tracks scroll position |
 | Empty | N/A |
-| Loading | During auth bootstrap on app load, user area shows a small skeleton — never a "Sign In" flash that would then disappear |
+| Loading | During auth bootstrap on app load, user area shows a small skeleton — never a "Sign In" flash that would then disappear *(skeleton placeholder is a planned addition; currently flashes Sign-in)* |
 | Error | If `/api/user/:id` fails on bootstrap, user is signed out and "Sign In" is shown |
-| Null fields | Missing avatar → default avatar asset; missing name → `"Member"` |
-| Unauthenticated | Cart icon hidden; "Sign In" button shown |
+| Null fields | Missing avatar → `/avatar.png` fallback; missing name → `"Member"` *(via shared `displayName` utility — not yet wired in)* |
+| Unauthenticated | Cart button hidden; user chip hidden; "Sign In" button shown |
 
 ---
 
@@ -441,3 +491,5 @@ These are explicitly **not** part of this spec and must not be built without an 
 | Date | Author | Change |
 |------|--------|--------|
 | 2026-05-22 | Initial draft | First version, derived from current codebase and UI/UX best-practice rules |
+| 2026-05-22 | Home motion pass | Home page reworked with cinematic hero (orbs, kinetic typography, 3D image tilt, glass cards), scroll-progress bar, marquee, animated stats, scroll-reveal grids, mouse-spotlit final CTA. All effects respect `prefers-reduced-motion`. §3.2 expanded accordingly |
+| 2026-05-22 | Header polish | Header rebuilt as a scroll-aware frosted-glass shell with animated underlines, SVG cart icon (replaces emoji), pulse-on-change cart badge, polished user chip + animated dropdown, mobile hamburger drawer, and full a11y semantics. §3.8 expanded accordingly |
