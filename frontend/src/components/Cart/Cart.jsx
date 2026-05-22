@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { useNavigate } from "react-router-dom";
 import "./Cart.scss";
 import { useCart } from "../../context/CartContext";
 import { useToast } from "../../context/ToastContext";
@@ -73,15 +74,15 @@ const TrashIcon = () => (
   </svg>
 );
 
-// Empty-state illustration — a stylised bag/box icon to replace the previous emoji.
+// Cart glyph used inside the empty-state illustration circle.
 const EmptyCartIcon = () => (
   <svg
-    width="72"
-    height="72"
+    width="38"
+    height="38"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    strokeWidth="1.5"
+    strokeWidth="1.6"
     strokeLinecap="round"
     strokeLinejoin="round"
     aria-hidden="true"
@@ -117,6 +118,7 @@ export const Cart = ({ isOpen, onClose }) => {
   const { cart, updateQuantity, removeFromCart, clearCart, getTotalAmount } =
     useCart();
   const { showToast } = useToast();
+  const navigate = useNavigate();
   const [removingId, setRemovingId] = useState(null);
   const [confirmClear, setConfirmClear] = useState(false);
 
@@ -214,12 +216,29 @@ export const Cart = ({ isOpen, onClose }) => {
         <div className="cart-content">
           {isEmpty ? (
             <div className="empty-cart">
-              <div className="empty-cart-icon" aria-hidden="true">
-                <EmptyCartIcon />
+              <div className="empty-cart-visual" aria-hidden="true">
+                <span className="ring ring-1" />
+                <span className="ring ring-2" />
+                <span className="ring ring-3" />
+                <div className="empty-cart-icon">
+                  <EmptyCartIcon />
+                </div>
+                <span className="sparkle sp-1" />
+                <span className="sparkle sp-2" />
+                <span className="sparkle sp-3" />
+                <span className="sparkle sp-4" />
+                <span className="sparkle sp-5" />
               </div>
               <h3>Your cart is empty</h3>
-              <p>Add some delicious items to get started.</p>
-              <button type="button" className="ghost-btn" onClick={onClose}>
+              <p>
+                Looks like you haven&apos;t added anything yet.
+                <br />Browse the menu and pick something delicious!
+              </p>
+              <button
+                type="button"
+                className="empty-browse-btn"
+                onClick={() => { onClose(); navigate("/menu"); }}
+              >
                 Browse menu
               </button>
             </div>

@@ -89,6 +89,83 @@ $ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   }
 }
 
+// ---------- Location chip ----------
+
+.location-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border: 1px solid rgba(255, 107, 53, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 107, 53, 0.05);
+  color: $ink;
+  font-size: 0.82rem;
+  font-weight: 500;
+  max-width: 180px;
+  transition:
+    background 0.25s $ease-out,
+    border-color 0.25s $ease-out,
+    transform 0.25s $ease-out;
+
+  svg {
+    flex-shrink: 0;
+    color: $primary;
+  }
+
+  .location-chip-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: $mute;
+  }
+
+  .location-chip-dot {
+    flex-shrink: 0;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: $primary;
+  }
+
+  &.has-location {
+    border-color: rgba(255, 107, 53, 0.3);
+    background: rgba(255, 107, 53, 0.06);
+
+    .location-chip-text {
+      color: $ink;
+      font-weight: 600;
+    }
+  }
+
+  &:hover {
+    background: rgba(255, 107, 53, 0.1);
+    border-color: rgba(255, 107, 53, 0.45);
+    transform: translateY(-1px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary;
+    outline-offset: 3px;
+  }
+
+  @media (max-width: 600px) {
+    max-width: 120px;
+
+    .location-chip-dot {
+      display: none;
+    }
+  }
+
+  @media (max-width: 400px) {
+    padding: 7px 10px;
+
+    .location-chip-text {
+      display: none;
+    }
+  }
+}
+
 // ---------- Navigation ----------
 
 .nav {

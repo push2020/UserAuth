@@ -492,7 +492,79 @@ A 4-column grid inside a 1240 px container. Collapses to 2 columns ≤ 900 px an
 
 ---
 
-### 3.10 Toast Notifications
+### 3.10 Delivery Location
+
+**Surface:** Location chip in the Header + `LocationModal` (portal-rendered to `document.body`).
+
+**Goal:** Capture and persist the user's delivery address so it can be used when placing an order and saved to their profile.
+
+**Header chip**
+
+- Sits between the logo and the primary nav.
+- Shows a pin icon + abbreviated first segment of the saved address (up to 24 chars, ellipsis-truncated).
+- Shows "Set location" when no address is saved.
+- A small primary-coloured dot appears when a location is set.
+- Clicking always opens the LocationModal.
+- Responsive: label hidden below 400 px (icon only remains).
+
+**First-visit auto-open**
+
+- On the very first visit (no `deliveryLocation` in `localStorage` and no `locationAsked` flag), the LocationModal opens automatically after a 1.2 s delay.
+- On all subsequent visits, the modal only opens when the user clicks the chip.
+
+**LocationModal — five UI states**
+
+| State | Shown when | Content |
+|-------|-----------|---------|
+| `idle` | Modal opens | Two CTAs: "Detect my location" and "Enter address manually" |
+| `detecting` | Geolocation API call in flight | Spinner + "Detecting your location…" |
+| `detected` | Coords resolved + address geocoded | Address in a primary-tinted card; "Confirm" + "Enter a different address" buttons |
+| `error` | Permission denied, timeout, or geocode failure | Error message in a red-tinted card + "Try again" + "Enter manually" |
+| `manual` | User picked manual entry | Text input with label, Save and Back buttons |
+
+**Geolocation flow**
+
+1. `navigator.geolocation.getCurrentPosition()` called with `enableHighAccuracy: false`, 10 s timeout.
+2. On success: coords passed to `reverseGeocode(lat, lng)` which calls the **Nominatim API** (OpenStreetMap, no API key required): `https://nominatim.openstreetmap.org/reverse?format=json&lat=…&lon=…`
+3. Address is assembled from `road / suburb / city / state` fields. Fallback to `display_name`.
+4. Address displayed for confirmation; user can confirm or switch to manual entry.
+5. On error code 1 (permission denied), code 2 (position unavailable), or code 3 (timeout): descriptive message shown and manual entry offered.
+
+**Manual entry**
+
+- Single `<input>` with `autocomplete="street-address"` and a real `<label>`.
+- Save button disabled while the input is empty.
+- Submit on Enter.
+
+**Saving**
+
+- `saveLocation({ address, lat, lng, source })` stores to `LocationContext` state and `localStorage`.
+- If the user is signed in, also calls `PUT /api/user/update/:id` silently with the address (background, no toast — failure is silent).
+- On successful save: modal closes.
+
+**Accessibility**
+
+- Portal-rendered — not clipped by the Header's `backdrop-filter` containing block.
+- `role="dialog"`, `aria-modal="true"`, `aria-labelledby` pointing at the heading.
+- Esc closes the modal.
+- Body scroll locks while open.
+- Focus moves to the manual input when that view becomes active.
+- All buttons have descriptive labels.
+
+**State coverage**
+
+| State | Behaviour |
+|-------|-----------|
+| Default | Header chip shows "Set location" or saved address; modal opens on click |
+| Empty | No saved address — chip shows "Set location"; first-visit auto-open fires |
+| Loading | Spinner in the `detecting` view |
+| Error | Error view with descriptive message + retry + manual fallback |
+| Null fields | If geocode returns null, error view shown |
+| Unauthenticated | Full feature available; address saved to localStorage only (no profile sync) |
+
+---
+
+### 3.11 Toast Notifications
 
 **Component:** `ToastMessage` — rendered into `document.body` via `createPortal` so it isn't clipped by ancestors with `backdrop-filter` or `transform`.
 
@@ -561,7 +633,30 @@ A 4-column grid inside a 1240 px container. Collapses to 2 columns ≤ 900 px an
 
 - Queue-managed (see §3.10).
 
-### 4.5 Scroll restoration
+### 4.5 LocationContext
+
+**Purpose:** Manages the user's chosen delivery address and the LocationModal's open/close state.
+
+**State shape:** `location: { address: string, lat: number|null, lng: number|null, source: 'auto'|'manual' } | null`
+
+**Persistence:**
+- Location is saved to `localStorage` key `deliveryLocation` (JSON).
+- A flag `locationAsked` in `localStorage` prevents the modal from auto-opening on repeat visits.
+- On first visit (no saved location, flag not set): modal opens automatically after a 1.2 s delay.
+
+**Saving to profile:** `saveLocation(loc, user)` accepts an optional `user` argument. If a logged-in user is supplied, it silently calls `PUT /api/user/update/:id` with the address in the background — the user's profile address field stays in sync.
+
+**Exposed API:**
+- `location` — current delivery location or `null`
+- `isModalOpen` — whether the LocationModal is visible
+- `openModal()` — opens the modal
+- `closeModal()` — closes the modal and sets the `locationAsked` flag
+- `saveLocation(loc, user?)` — persists location + optionally syncs profile
+- `clearLocation()` — clears location from state and localStorage
+
+**Reverse geocoding:** exported helper `reverseGeocode(lat, lng)` calls the Nominatim API (OpenStreetMap, no key required) and returns a short human-readable string built from `road / suburb / city / state`. Returns `null` on failure.
+
+### 4.6 Scroll restoration
 
 - A single `<ScrollToTop />` component lives inside `<BrowserRouter>` (above `<Header />`) in `App.jsx`. It listens to `useLocation().pathname` and calls `window.scrollTo(0, 0)` on every change.
 - Behaviour is **instant** (not smooth) so route transitions feel responsive rather than laggy.
@@ -626,6 +721,7 @@ These are explicitly **not** part of this spec and must not be built without an 
 - Reviews and ratings.
 - Push notifications.
 - Internationalisation beyond INR currency and English copy.
+- Location-based menu filtering (e.g. showing only kitchens near the saved address) — location is currently captured and persisted but not used to filter API results.
 
 ---
 
@@ -640,4 +736,5 @@ These are explicitly **not** part of this spec and must not be built without an 
 | 2026-05-22 | AuthModal fix + polish | **Bug fix:** modal was clipping to the Header because the Header's `backdrop-filter` creates a new containing block for fixed descendants. Modal now renders via `createPortal` to `document.body`. **Redesign:** dark blurred backdrop, frosted card with orb accents, gradient title, real `<label>` elements, show/hide password toggle, Enter-to-submit via form `onSubmit`, Esc-to-close, body scroll lock, disabled-with-spinner submit, real `<button>` toggle link. **Cleanups:** validation now fails on first invalid field (was returning only the last result); removed `console.log` calls; close glyph and toggle are SVG / `<button>` (no `×` unicode, no `<span onClick>`). §3.1 expanded accordingly |
 | 2026-05-22 | Cart portal fix | **Bug fix:** Cart drawer was being clipped by the Header's `backdrop-filter` containing block (same root cause as the AuthModal bug above). Cart now renders via `createPortal` to `document.body`. §3.7 amended with the portal-requirement note |
 | 2026-05-22 | Full-app design pass | Brought the rest of the app up to the new design language: Cart (full redesign — SVG glyphs replace `🛒` / `🍽️` / `×`, inline destructive confirmation replaces `window.confirm`, gradient stepper, frosted backdrop, ARIA dialog semantics, body scroll lock, Esc-to-close); ProfileCard + Profile route (banner + gradient-ring avatar + definition-list view mode + form with proper labels + spinner-on-save + Cancel reverts cleanly + in-page gated state for unauthenticated visitors); About (hero + feature card + values grid with staggered scroll-reveal); Contact (hero + 2-column grid with SVG contact glyphs — no emoji — + map card); NotFound (cinematic dark layout with kinetic gradient `0`); Toast (portal-rendered, top-right, frosted-dark with coloured icon disc and drain-bar countdown, removed `console.log` from ToastContext). §3.3, §3.4, §3.6, §3.7, §3.10, §3.11 all expanded |
-| 2026-05-22 | Scroll-to-top on route change | Added a single `<ScrollToTop />` component inside `<BrowserRouter>` that resets `window.scrollTo(0, 0)` on every `pathname` change. Hash changes are ignored so in-page anchors still work. §4.5 added |
+| 2026-05-22 | Scroll-to-top on route change | Added a single `<ScrollToTop />` component inside `<BrowserRouter>` that resets `window.scrollTo(0, 0)` on every `pathname` change. Hash changes are ignored so in-page anchors still work. §4.6 added |
+| 2026-05-22 | Delivery location feature | New `LocationContext` + `LocationModal` + Header chip. Browser geolocation → Nominatim reverse-geocode → address confirmation. Manual entry fallback. Persisted to `localStorage`; synced to user profile when signed in. Auto-opens on first visit. §3.10 and §4.5 added |

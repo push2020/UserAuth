@@ -1,0 +1,371 @@
+// =====================================================================
+// LocationModal
+// Portal-rendered modal for delivery address selection.
+// Two modes: browser geolocation and manual text entry.
+// =====================================================================
+
+$primary: #ff6b35;
+$primary-soft: #ff8c5a;
+$accent: #ffd166;
+$ink: #14141a;
+$mute: #6f6f7a;
+$paper: #ffffff;
+$paper-2: #f6f4ef;
+$line: rgba(0, 0, 0, 0.07);
+$danger: #c4392f;
+$ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+// ── Backdrop ──────────────────────────────────────────────────────────
+
+.loc-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 13, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  z-index: 1200;
+  animation: loc-fade 0.25s $ease-out;
+}
+
+@keyframes loc-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+// ── Card ──────────────────────────────────────────────────────────────
+
+.loc-modal {
+  position: relative;
+  width: min(100%, 440px);
+  background: $paper;
+  border-radius: 24px;
+  padding: 36px clamp(22px, 5vw, 38px) 28px;
+  box-shadow:
+    0 30px 60px -20px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+  animation: loc-slide 0.35s $ease-out;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+@keyframes loc-slide {
+  from { opacity: 0; transform: translateY(20px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.loc-modal-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: inherit;
+
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.3;
+  }
+
+  .orb-a {
+    width: 260px;
+    height: 260px;
+    background: radial-gradient(circle, $primary, transparent 60%);
+    top: -110px;
+    left: -80px;
+  }
+
+  .orb-b {
+    width: 220px;
+    height: 220px;
+    background: radial-gradient(circle, $accent, transparent 60%);
+    top: -80px;
+    right: -80px;
+  }
+}
+
+// ── Close ─────────────────────────────────────────────────────────────
+
+.loc-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.04);
+  color: $ink;
+  transition: background 0.2s $ease-out, transform 0.2s $ease-out;
+
+  &:hover {
+    background: rgba(255, 107, 53, 0.1);
+    color: $primary;
+    transform: rotate(90deg);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary;
+    outline-offset: 2px;
+  }
+}
+
+// ── Header ────────────────────────────────────────────────────────────
+
+.loc-header {
+  text-align: center;
+  margin-bottom: 22px;
+
+  .loc-pin {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, $primary, $primary-soft);
+    color: #fff;
+    margin-bottom: 14px;
+    box-shadow: 0 12px 24px -10px rgba(255, 107, 53, 0.55);
+  }
+
+  .loc-eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 0.72rem;
+    color: $primary;
+    font-weight: 600;
+    margin: 0 0 6px;
+  }
+
+  h2 {
+    margin: 0 0 8px;
+    font-size: clamp(1.3rem, 3vw, 1.55rem);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: $ink;
+  }
+
+  .loc-sub {
+    margin: 0;
+    color: $mute;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+}
+
+// ── CTAs ──────────────────────────────────────────────────────────────
+
+.loc-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.loc-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 13px 20px;
+  border-radius: 14px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  overflow: hidden;
+  transition: transform 0.25s $ease-out, box-shadow 0.25s $ease-out,
+    background 0.25s $ease-out;
+
+  &.primary {
+    border: none;
+    background: linear-gradient(135deg, $primary, $primary-soft);
+    color: #fff;
+    box-shadow: 0 10px 24px -10px rgba(255, 107, 53, 0.55);
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, $accent, $primary);
+      opacity: 0;
+      transition: opacity 0.25s $ease-out;
+    }
+
+    span, svg { position: relative; z-index: 1; }
+
+    &:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 16px 30px -10px rgba(255, 107, 53, 0.7);
+
+      &::before { opacity: 1; }
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
+  &.ghost {
+    border: 1.5px solid $line;
+    background: $paper-2;
+    color: $ink;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.04);
+      border-color: rgba(255, 107, 53, 0.25);
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid $accent;
+    outline-offset: 3px;
+  }
+}
+
+// ── Detecting spinner ─────────────────────────────────────────────────
+
+.loc-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 0 8px;
+
+  p {
+    color: $mute;
+    font-size: 0.95rem;
+    margin: 0;
+  }
+}
+
+.loc-spinner {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 107, 53, 0.15);
+  border-top-color: $primary;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+// ── Detected address ──────────────────────────────────────────────────
+
+.detected-address {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(255, 107, 53, 0.05);
+  border: 1.5px solid rgba(255, 107, 53, 0.2);
+  border-radius: 14px;
+  margin-top: 4px;
+
+  .detected-icon {
+    flex-shrink: 0;
+    color: $primary;
+    margin-top: 2px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: $ink;
+    line-height: 1.5;
+  }
+}
+
+// ── Error ─────────────────────────────────────────────────────────────
+
+.loc-error {
+  .error-msg {
+    padding: 12px 16px;
+    background: rgba(196, 57, 47, 0.06);
+    border: 1px solid rgba(196, 57, 47, 0.2);
+    border-radius: 12px;
+    color: $danger;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: 4px 0 0;
+  }
+}
+
+// ── Manual form ───────────────────────────────────────────────────────
+
+.loc-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.loc-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: $ink;
+    letter-spacing: 0.01em;
+  }
+
+  input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid $line;
+    border-radius: 12px;
+    background: $paper-2;
+    color: $ink;
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: border-color 0.25s $ease-out, box-shadow 0.25s $ease-out,
+      background 0.25s $ease-out;
+
+    &::placeholder { color: rgba(20, 20, 26, 0.35); }
+
+    &:hover { border-color: rgba(255, 107, 53, 0.3); }
+
+    &:focus {
+      outline: none;
+      border-color: $primary;
+      background: $paper;
+      box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.12);
+    }
+  }
+}
+
+// ── Profile note ─────────────────────────────────────────────────────
+
+.loc-profile-note {
+  margin: 16px 0 0;
+  font-size: 0.78rem;
+  color: $mute;
+  text-align: center;
+}
+
+// ── Reduced motion ────────────────────────────────────────────────────
+
+@media (prefers-reduced-motion: reduce) {
+  .loc-overlay,
+  .loc-modal,
+  .loc-close,
+  .loc-btn,
+  .loc-btn::before,
+  .loc-spinner {
+    animation: none;
+    transition: none;
+  }
+}

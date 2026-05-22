@@ -1,10 +1,12 @@
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate, useLocation as useRouterLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import "../Header/Header.scss";
 import { useModal } from "../../context/ModalContext.jsx";
 import { AuthModal } from "../AuthModal/AuthModal.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { useCart } from "../../context/CartContext.jsx";
+import { useLocation as useDeliveryLocation } from "../../context/LocationContext.jsx";
+import { LocationModal } from "../LocationModal/LocationModal.jsx";
 import { Prompt } from "../Prompt/Prompt.jsx";
 import OutSideClick from "../../hooks/useOutSideClick.jsx";
 import { useToast } from "../../context/ToastContext.jsx";
@@ -122,11 +124,30 @@ const UserChip = ({ user, onClick, isOpen }) => (
   </button>
 );
 
+// Truncates a delivery address to fit the header chip without overflowing.
+// Returns the first meaningful segment (up to 24 chars) or a fallback string.
+const shortAddress = (address) => {
+  if (!address) return "Set location";
+  const first = address.split(",")[0].trim();
+  return first.length > 24 ? `${first.slice(0, 22)}…` : first;
+};
+
+// Pin icon for the location chip in the header.
+const PinIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+    strokeLinejoin="round" aria-hidden="true">
+    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z" />
+    <circle cx="12" cy="10" r="3" />
+  </svg>
+);
+
 // Top-of-app sticky header. Owns the cart drawer trigger, the profile dropdown,
 // the mobile nav drawer, and the scroll-aware visual state.
 export const Header = () => {
   const navigate = useNavigate();
-  const location = useLocation();
+  const location = useRouterLocation();
+  const { location: deliveryLocation, openModal: openLocationModal } = useDeliveryLocation();
   const { isModalOpen, openModal, closeModal } = useModal();
   const { user, logout } = useAuth();
   const { itemCount } = useCart();
@@ -183,6 +204,21 @@ export const Header = () => {
           <img className="logo-icon" src={cloudinaryAssets.logo} alt="" />
           <span className="logo-text">FoodExpress</span>
         </Link>
+
+        <button
+          type="button"
+          className={`location-chip${deliveryLocation ? " has-location" : ""}`}
+          onClick={openLocationModal}
+          aria-label={deliveryLocation ? `Change delivery location: ${deliveryLocation.address}` : "Set delivery location"}
+        >
+          <PinIcon />
+          <span className="location-chip-text">
+            {deliveryLocation
+              ? shortAddress(deliveryLocation.address)
+              : "Set location"}
+          </span>
+          {deliveryLocation && <span className="location-chip-dot" aria-hidden="true" />}
+        </button>
 
         <nav
           className={`nav${isMobileOpen ? " is-open" : ""}`}
@@ -284,6 +320,7 @@ export const Header = () => {
         </div>
       </div>
       <Cart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      <LocationModal />
     </header>
   );
 };

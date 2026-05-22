@@ -7,6 +7,7 @@ import { ScrollToTop } from "./components/ScrollToTop/ScrollToTop.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { ToastProvider } from "./context/ToastContext.jsx";
 import { CartProvider } from "./context/CartContext.jsx";
+import { LocationProvider } from "./context/LocationContext.jsx";
 
 function App() {
   return (
@@ -14,11 +15,13 @@ function App() {
       <CartProvider>
         <ModalProvider>
           <ToastProvider>
-            <BrowserRouter>
-              <ScrollToTop />
-              <Header />
-              <AppRoutes />
-            </BrowserRouter>
+            <LocationProvider>
+              <BrowserRouter>
+                <ScrollToTop />
+                <Header />
+                <AppRoutes />
+              </BrowserRouter>
+            </LocationProvider>
           </ToastProvider>
         </ModalProvider>
       </CartProvider>
