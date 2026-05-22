@@ -69,7 +69,18 @@ Every screen below must specify each of these six states. Implementations that s
 
 **Surface:** `AuthModal` overlay, opened from Header "Sign In" button or any gated action.
 
+**Rendering**
+
+- Rendered via `ReactDOM.createPortal(modal, document.body)`. **This is non-negotiable** — the Header has `backdrop-filter` set, which creates a new containing block for any `position: fixed` descendant. Without the portal, the modal-overlay clips to the Header's bounds (see screenshot in the May 22 PR for what this regression looks like). Future contributors who refactor the modal must preserve the portal.
+- Body scroll is locked (`document.body.style.overflow = "hidden"`) while open and restored to its previous value on close.
+
 **Goal:** Let a visitor create an account or sign back in so they can order.
+
+**Visual shell**
+
+- Backdrop: `rgba(10, 10, 13, 0.55)` over an 8 px `backdrop-filter: blur`. Fades in over 250 ms.
+- Card: 440 px max-width, white, 24 px radius, soft drop shadow + inset highlight. Two decorative gradient orbs (primary, accent) bleed through the top corners. Card animates in from `translateY(20px) scale(0.96)` to rest.
+- Header: gradient eyebrow "Welcome back" / "Join us", large gradient title, supporting copy.
 
 **Inputs**
 
@@ -79,36 +90,50 @@ Every screen below must specify each of these six states. Implementations that s
 | Email | required | required | RFC-like regex; trimmed; lowercased on submit |
 | Password | required | required | Min 8 chars; ≥ 1 uppercase, ≥ 1 lowercase, ≥ 1 digit, ≥ 1 special |
 
+Each input has an explicit `<label>` linked via `htmlFor`/`id`. Inputs use `autoComplete="name" | "email" | "current-password" | "new-password"` so password managers behave correctly. Password field has a show/hide eye toggle (a real `<button>` with keyboard support and `aria-label`).
+
 > **Note:** Backend currently accepts a 6-char minimum password. Backend must be tightened to match the 8-char rule above before this spec ships. Until then, the frontend enforces the stricter rule and rejects locally.
+
+**Validation logic**
+
+`isPayloadValid(data)` walks every supplied field and returns `false` on the first failure (an earlier bug returned only the result of the last iterated field — fixed in the May 22 polish pass). Submission is blocked client-side when validation fails and a toast describes the rule.
 
 **Actions**
 
-- Submit (primary, full-width)
-- Toggle between Sign Up / Sign In (link, not button)
-- Close modal (X icon, top-right; also Esc key; also click outside)
+- Submit — full-width gradient pill. Disabled and shows an inline spinner while a request is in flight.
+- Form `onSubmit` is bound so the Enter key submits (the previous version had the handler on the button's `onClick` only, which broke Enter-to-submit).
+- Toggle between Sign Up / Sign In is a real `<button>` (was a `<span onClick>` — invalid semantics).
+- Close: X icon top-right, **or** Escape key, **or** click on backdrop.
 
 **Backend**
 
-- `POST /auth/signup` → `{ token, user }`
-- `POST /auth/login` → `{ token, user }`
-- On success: store JWT in `localStorage.authToken`, hydrate `AuthContext`, fire success toast, close modal.
+- `POST /auth/signup` → `{ message, user }`
+- `POST /auth/login` → `{ message, jwtToken, user: { id } }`
+- On login success: store JWT in `localStorage.authToken` and on `AppConstants.Auth_Token`, then `GET /api/user/:id` for the full profile, persist it as `localStorage.userProfile`, hydrate `AuthContext`, fire success toast, close modal after a 2 s read time.
+- On signup success: flip to login mode (user signs in with their new credentials).
 
 **State coverage**
 
 | State | Behaviour |
 |-------|-----------|
-| Default | Empty form, primary CTA enabled when all fields valid |
+| Default | Empty form, password hidden, submit enabled |
 | Empty | N/A — no list view |
-| Loading | Submit button shows inline spinner; all fields and toggle disabled |
-| Error | Inline field errors for client-side validation; banner above submit for server errors ("Invalid email or password", "User already exists") with retry by re-submitting |
+| Loading | Submit button disabled and shows an inline spinner; all fields remain readable but the form is non-interactive via submit disable |
+| Error | Client-side validation → descriptive toast (rule-explaining body). Server error → toast with `error.message` (e.g. "Invalid email or password", "User already exists"). User stays on the modal and can retry |
 | Null fields | N/A |
 | Unauthenticated | This screen IS the unauthenticated entry point |
 
 **Accessibility**
 
-- Modal traps focus while open and returns focus to the trigger on close.
-- All inputs have associated `<label>` elements.
-- Password field has a "Show password" toggle reachable by keyboard.
+- Card has `role="dialog"`, `aria-modal="true"`, `aria-labelledby` pointing at the title.
+- First field is focused on open (60 ms timeout so the animation doesn't fight the focus ring).
+- Close button has `aria-label="Close"`; password toggle has `aria-label="Show password"` / `"Hide password"`.
+- All inputs have visible labels (no placeholder-only labels).
+- Escape closes the modal.
+- All focusable elements have a visible `:focus-visible` ring.
+- `prefers-reduced-motion: reduce` disables the entry animations, hover transitions, and the submit spinner's rotation.
+
+> **Planned upgrade:** full focus-trap (cycle Tab inside the modal) and focus-return-to-trigger on close. Today only initial focus is implemented; Tab can leave the modal into the underlying header.
 
 ---
 
@@ -157,11 +182,17 @@ Every screen below must specify each of these six states. Implementations that s
 
 **Route:** `/about`
 
-**Goal:** Describe the brand.
+**Goal:** Describe the brand and surface what we stand for.
 
-Static page. Content is editorial copy + a single illustrative image. No API calls.
+**Structure**
 
-**State coverage:** Default only. No loading / empty / error / unauthenticated variants. Image must always have descriptive `alt` text.
+1. **Hero** — dark gradient banner with two drifting orbs, pulsing-dot eyebrow ("Our story"), gradient heading "About FoodExpress", supporting copy.
+2. **Feature card** — split 2-column card (image left, copy right) with a "Browse the menu" CTA → `/menu`. Collapses to single column ≤ 800 px.
+3. **Values grid** — three cards ("Fast delivery", "Curated kitchens", "Transparent prices") each with an indexed eyebrow ("01"/"02"/"03"), title, and supporting copy. Staggered scroll-reveal (80 ms per card via `--reveal-delay`).
+
+Static page — no API calls.
+
+**State coverage:** Default only. Scroll-reveal disabled under `prefers-reduced-motion`. All content images have descriptive `alt` text.
 
 ---
 
@@ -169,17 +200,16 @@ Static page. Content is editorial copy + a single illustrative image. No API cal
 
 **Route:** `/contact`
 
-**Goal:** Provide support channels and location.
+**Goal:** Provide support channels and physical location.
 
-**Displayed information**
+**Structure**
 
-- Address (Mumbai, IN)
-- Phone — rendered as `<a href="tel:…">`
-- Email — rendered as `<a href="mailto:…">`
-- Working hours
-- Embedded Google Map iframe with `title` attribute for screen readers
+1. **Hero** — same dark gradient pattern as About; eyebrow "Talk to us", heading "Get in touch".
+2. **Contact grid** — 2-column layout (collapses to 1 column ≤ 860 px):
+   - **"Reach us" card** — list of four rows. Each row pairs an SVG glyph in a primary-tinted square (pin / phone / mail / clock — no emoji per the icon rule) with a label and value. Phone uses `tel:`, email uses `mailto:`.
+   - **Map card** — embedded Google Map iframe with `title="FoodExpress office map"`, lazy loaded, fills its container.
 
-**State coverage:** Default only. Tel/mailto links must be keyboard-focusable with visible focus styles.
+**State coverage:** Default only. All links keyboard-focusable with visible focus rings. Map iframe is `loading="lazy"`.
 
 ---
 
@@ -189,56 +219,78 @@ Static page. Content is editorial copy + a single illustrative image. No API cal
 
 **Goal:** Let a signed-in user browse the categorised menu and add items to the cart.
 
-**Layout**
+**Page structure**
 
-- Categories rendered as section headers in order returned by API.
-- Each category contains a responsive grid of item cards.
-- Item card shows: image, name (display-safe), price (`formatCurrency`), veg/non-veg badge, add/quantity control.
+1. **Menu hero** (always rendered, in every state) — full-width dark gradient banner with two drifting blurred orbs and a centre-masked dot grid. Contents:
+   - Pulsing-dot eyebrow chip "Today's menu".
+   - Large gradient heading "Explore the menu" (white → translucent white).
+   - Supporting copy.
+2. **Category sections** — alternate between paper (white) and paper-2 (cream) backgrounds for visual rhythm.
+   - Eyebrow ("Category") + name as a section header.
+   - Responsive grid (`auto-fill, minmax(260px, 1fr)`).
+3. **Footer** (see §3.9).
 
-**Quantity control behaviour**
+**Item card**
 
-- If item is not in cart: single "Add" button.
-- If item is in cart: `−  {qty}  +` control. Disabled while a cart mutation is in flight for that item.
-- Local optimistic update; reverts on API failure with an error toast.
+- Aspect-ratio 4:3 image with hover zoom (1.06×) and graceful `onError` swap to `menu.defaultImage`. Image carries `loading="lazy"`.
+- **Veg / non-veg chip** — frosted-white pill on the top-left of the image. Combines colour AND a bordered square + dot (Indian veg-symbol convention). Exposes `aria-label="Vegetarian"` / `"Non-vegetarian"` so screen readers don't rely on colour. (Satisfies the UI/UX rule: "Color is not the only signal".)
+- Title, price (with ₹ prefix), quantity control.
+- Hover: card lifts 4 px, soft shadow expands, border warms to a primary tint.
+
+**Quantity control**
+
+- When count is 0 → single gradient "Add" pill button with a `+` icon.
+- When count is ≥ 1 → three-segment stepper inside a gradient pill: `[−] [count] [+]`. Each segment is a real `<button>` (not a `<div onClick>`); group is wrapped in `role="group"` with an `aria-label` naming the item; the count is wrapped in `aria-live="polite"` so screen readers announce changes.
+- Increment uses the same path whether the item is new (calls `addToCart`) or already in cart (calls `updateQuantity`). Decrement removes the line at count = 1.
+- The payload passed to `addToCart` is destructured to strip the server's `_id` field — the caller's object is never mutated.
+
+**Scroll-reveal**
+
+Every `[data-reveal]` element (category headers, item cards) fades up 24 px with a 0.8 s ease-out on viewport entry. Cards stagger by 60 ms (up to 6 cards). Disabled when `prefers-reduced-motion: reduce`.
 
 **Backend**
 
-- `GET /menu` (JWT required) → `{ categories: [{ name, items: [...] }] }`
+- `GET /menu` (JWT required) → `{ categories: [{ name, items: [...] }], defaultImage }`.
 - Cart mutations dispatched to the Cart endpoints (see §3.7).
 
 **State coverage**
 
 | State | Behaviour |
 |-------|-----------|
-| Default | Full menu grid |
-| Empty | API returns no categories → "Menu is being prepared — check back soon." + link to Home |
-| Loading | Skeleton category section after 200 ms; subsequent category loads also skeletoned |
-| Error | Full-page error card with "Retry" button; cached menu remains visible if the fetch was a refresh |
-| Null fields | Item with no image → branded placeholder tile; item with no price → hide "Add" button and show "Coming soon" |
-| Unauthenticated | In-page prompt: "Sign in to view the menu and order." Primary CTA opens AuthModal — no redirect, preserves URL |
+| Default | Hero + alternating category sections + grid of cards |
+| Empty | `categories: []` → "Menu is being prepared. Check back soon — fresh dishes are on the way." (hero still rendered) |
+| Loading | While menu is fetching, the page shows the full-page `Loader` component centred in a 70vh wrapper. (Skeleton category sections are a planned upgrade.) |
+| Error | "We couldn't load the menu" card with a "Try again" button that resets state and re-triggers the fetch. Hero still rendered. (Cached menu retention on refresh is a planned upgrade.) |
+| Null fields | Item with no image → `defaultImage` fallback via the image `onError` handler. Item with no `_id` is supported (handler destructures defensively). |
+| Unauthenticated | Hero still rendered. Below it: "Sign in to view the menu" card with a primary "Sign in" CTA that opens the `AuthModal` via `ModalContext.openModal`. URL is preserved — no redirect. |
 
 ---
 
 ### 3.6 User Profile
 
-**Route:** `/profile` — **authenticated only**
+**Route:** `/profile` — **authenticated only** (gated state shown for unauthenticated visitors; no redirect)
 
 **Goal:** Let a user view and edit their profile (avatar, name, email, phone, address).
 
+**Page structure**
+
+1. **Profile banner** — dark gradient header with two orbs and a pulsing-dot eyebrow ("Manage your account" / "Sign in to manage your details"), gradient heading.
+2. **Profile card** — white card overlapping the banner by 40 px (negative top margin + `z-index`), shadowed.
+
 **View mode**
 
-- Avatar (Cloudinary URL or default `/avatar.png` fallback — must never render a broken image).
-- Name (displayed via `displayName`).
-- Email.
-- Phone — shows `"Not added"` fallback when null.
-- Address — shows `"Not added"` fallback when null.
-- "Edit Profile" button.
+- Circular avatar in a gradient ring (primary → accent). Falls back to `/avatar.png` if the user has no avatar. Avatar URL is resolved by `resolveAvatar` — handles `blob:` previews, full URLs, and API-relative paths.
+- Name (large), email (muted) in the card header.
+- Definition list with two field rows: Phone, Address. Each row has an uppercase primary eyebrow ("PHONE"/"ADDRESS") and a value. Empty values render `"Not added"` in italic muted style (so the absence is obvious).
+- "Edit profile" primary CTA.
 
 **Edit mode**
 
-- All five fields editable.
-- Avatar upload uses `<input type="file" accept="image/*">`; shows preview before save.
-- "Save" (primary) and "Cancel" (secondary) buttons.
+- Avatar button becomes clickable and shows a camera-glyph overlay; opens a hidden `<input type="file" accept="image/*">`. New file is previewed via `URL.createObjectURL` before save.
+- All four fields render as labelled `<input>`s with proper `id` / `htmlFor`. Field types: `text`, `email`, `tel`, `text`.
+- Form is wrapped in `<form onSubmit>` — Enter key submits.
+- "Cancel" (secondary, ghost) reverts formData to the original user record and exits edit mode. "Save" (primary) submits.
+- While saving: Save shows an inline spinner; both buttons are disabled.
 
 **Validation (client-side, before submit)**
 
@@ -261,8 +313,8 @@ Static page. Content is editorial copy + a single illustrative image. No API cal
 | Empty | N/A — a profile always exists once authenticated |
 | Loading | Skeleton card after 200 ms; Save button shows inline spinner during submit |
 | Error | Field-level errors for validation; banner above Save for server errors with "Retry" |
-| Null fields | `phone`/`address` → `"Not added"`; `avatarUrl` → default avatar asset |
-| Unauthenticated | Redirect to `/` and open AuthModal with message "Sign in to access your profile" |
+| Null fields | `phone`/`address` → `"Not added"` (italic muted); `avatarUrl` → `/avatar.png` fallback |
+| Unauthenticated | In-page gated card: "Sign in to view your profile" + primary "Sign in" CTA that opens AuthModal. URL is preserved — no redirect |
 
 ---
 
@@ -270,13 +322,45 @@ Static page. Content is editorial copy + a single illustrative image. No API cal
 
 **Surface:** Right-side drawer, opened from cart icon in Header.
 
+**Rendering**
+
+- Rendered via `ReactDOM.createPortal(drawer, document.body)`. **Non-negotiable** — the Header has `backdrop-filter` set, which creates a containing block for any `position: fixed` descendant. Without the portal, the cart-overlay clips to the Header's bounds. (Same constraint as [[AuthModal §3.1]].)
+
 **Goal:** Let a user review items, change quantities, clear the cart, and proceed to checkout.
 
-**Displayed content**
+**Visual shell**
 
-- Item rows: image, name, category, price (`formatCurrency`), veg/non-veg badge, quantity stepper, remove button, line total (`formatCurrency`).
-- Summary: Subtotal, Delivery Fee (currently "Free" — copy stored as a constant, not hardcoded inline), Total.
-- Footer actions: "Clear Cart" (destructive, requires confirmation Prompt), "Proceed to Checkout" (primary).
+- Frosted-dark backdrop over the page (`rgba(10,10,13,0.55)` + 6 px blur), fade-in.
+- White drawer slides in from the right (max-width 520 px on desktop, full-width below 600 px).
+- Body scroll locks while open; Escape closes; backdrop click closes.
+- `role="dialog"`, `aria-modal="true"`, `aria-labelledby` on the drawer.
+
+**Header**
+
+- Gradient eyebrow ("Your selection") + heading ("Your cart") + count line (e.g. "3 items" — singular/plural aware).
+- Close button: SVG `×` (the old `×` unicode glyph is removed per the icon rule). Rotates 90° on hover.
+
+**Item row**
+
+- 80 × 80 image (64 × 64 below 600 px) with `loading="lazy"`. Missing image → SVG placeholder tile, not the previous `🍽️` emoji.
+- Name (truncated to one line), capitalised category, **veg/non-veg chip with shape+colour** (bordered square + dot — matches the Menu chip), price.
+- Gradient quantity stepper (matches the Menu stepper): real `<button>` segments wrapped in `role="group"` with `aria-label`-ed item name; count uses `aria-live="polite"`.
+- Remove pill: ghost button with trash glyph, warms to danger-red on hover. `aria-label` includes the item name.
+- Line total at the bottom, dashed top border.
+
+**Footer**
+
+- Summary rows: Subtotal, Delivery fee (`Free` shown in green), Total (larger, bolder, with top border).
+- Action row: "Clear cart" (ghost) and "Proceed to checkout" (gradient primary).
+
+**Destructive confirmation**
+
+- Clicking "Clear cart" swaps the action row for an inline confirmation panel (red-tinted): "Remove all items from your cart?" + "Cancel" (ghost) and "Yes, clear" (danger). This replaces the previous `window.confirm()` call — no native browser prompt.
+- Confirmation state resets whenever the drawer closes.
+
+**Empty state**
+
+- Centered SVG bag glyph in a soft circle, "Your cart is empty" heading, supporting copy, "Browse menu" ghost button that closes the drawer.
 
 **Backend**
 
@@ -295,15 +379,11 @@ All require JWT. All mutations return the updated cart; client replaces local st
 | State | Behaviour |
 |-------|-----------|
 | Default | Item list + summary + footer actions |
-| Empty | Decorative illustration + "Your cart is empty" + primary CTA "Browse Menu" → `/menu`. Footer actions hidden |
-| Loading | Skeleton rows when drawer opens; per-row spinner during +/-/remove operations |
-| Error | Error toast for failed mutations; row reverts to last known good state. A full-cart fetch failure shows in-drawer error card with "Retry" |
-| Null fields | Item without image → placeholder tile; item without category → hide category line (do not show "undefined") |
-| Unauthenticated | Drawer cannot be opened — cart icon is hidden in the Header when not authenticated |
-
-**Confirmation Prompt**
-
-"Clear Cart" must open the existing `Prompt` component with message: "Remove all items from your cart? This can't be undone." Confirm button is destructive-styled.
+| Empty | SVG illustration + "Your cart is empty" + ghost "Browse menu" button. Footer actions hidden |
+| Loading | (Planned) Skeleton rows when drawer opens; per-row spinner during +/-/remove operations |
+| Error | Error toast for failed mutations; row reverts to last known good state. A full-cart fetch failure shows in-drawer error card with "Retry" (planned) |
+| Null fields | Item without image → SVG placeholder tile; item without category → category line is hidden (no `"undefined"` text) |
+| Unauthenticated | Drawer cannot be opened — cart button is hidden in the Header when not authenticated |
 
 ---
 
@@ -369,24 +449,72 @@ All require JWT. All mutations return the updated cart; client replaces local st
 
 ### 3.9 Footer
 
-**Visible** on Home and Menu pages.
+**Visible** on Home and Menu pages. (About, Contact, and Profile do not include it.)
 
-Static content: company blurb, quick links (Home, Menu, About Us, Contact), contact info, dynamic copyright year (computed via `formatDate(new Date(), "year")`, never `new Date().getFullYear()` inline).
+**Visual shell**
+
+- Dark radial gradient (`#161018 → #0a0a0d`) that blends with the Home page's final-CTA section and the Menu page's hero.
+- Two large blurred orbs (primary and accent) drifting in the background at low opacity for atmosphere.
+- Thin top border (`rgba(255,255,255,0.08)`) to mark the boundary.
+
+**Layout**
+
+A 4-column grid inside a 1240 px container. Collapses to 2 columns ≤ 900 px and 1 column ≤ 540 px.
+
+1. **Brand** — gradient logo wordmark (matches Header), short tagline.
+2. **Explore** — Quick links: Home, Menu, About, Contact. Each link has an animated gradient underline (scales in from the left on hover/focus, matching Header behaviour).
+3. **Reach us** — Email (`mailto:`), phone (`tel:`), and the Mumbai address. Each row pairs an SVG glyph (envelope / handset / map-pin) with the value. Glyphs are decorative; the surrounding link text carries the meaning.
+4. **Hours** — Operating days/hours plus a small live-status pill ("Kitchens open now") with a pulsing green dot.
+
+**Bottom bar**
+
+- Thin top divider, copyright on the left, "Crafted with care." on the right (muted).
+- Year is computed inline via `new Date().getFullYear()`. The shared `formatDate` utility from §2.1 is the target once it exists; until then, this is the documented exception.
+
+**State coverage**
+
+| State | Behaviour |
+|-------|-----------|
+| Default | All four columns + bottom bar render as above |
+| Empty | N/A — fully static content |
+| Loading | N/A |
+| Error | N/A |
+| Null fields | N/A — all content is hardcoded |
+| Unauthenticated | No change — Footer is the same in both auth states |
+
+**Accessibility**
+
+- Logo link has `aria-label="FoodExpress home"`; the image's `alt` is empty so screen readers don't read the wordmark twice.
+- All SVG glyphs are `aria-hidden="true"`.
+- `tel:` and `mailto:` links inherit native semantics.
+- All focusable elements have `:focus-visible` rings (2 px primary, 4 px offset).
+- The pulsing status dot animation is disabled under `prefers-reduced-motion: reduce`.
 
 ---
 
 ### 3.10 Toast Notifications
 
-**Component:** `ToastMessage`.
+**Component:** `ToastMessage` — rendered into `document.body` via `createPortal` so it isn't clipped by ancestors with `backdrop-filter` or `transform`.
 
-**Types:** `success`, `error`, `progress`, `default`.
+**Types:** `success` (green disc), `error` (red disc), `progress` (orange disc; icon spins), `default` (same as success).
+
+**Visual shell**
+
+- Frosted-dark card pinned to the top-right of the viewport (88 px from the top so it clears the sticky header; 20 px from the right). Below 480 px width, it stretches edge-to-edge with 12 px side gutters.
+- 36 × 36 coloured icon disc on the left; title (bold, 0.92 rem) + body (muted, 0.82 rem) on the right.
+- Bottom-edge progress bar animates `scaleX(1)` → `scaleX(0)` over the visible window — gives a visual countdown.
+- Z-index `1500` (above modal overlays at 1000).
 
 **Rules**
 
-- Auto-dismiss after 3000 ms (constant: `TOAST_DISMISS_MS`, defined in `constants/ToastConstants.js`).
-- Stacked vertically; max 3 simultaneous toasts; oldest is dismissed if the queue exceeds 3.
-- Each toast is keyboard-dismissible (Esc dismisses the most recent).
-- Error toasts include a "Retry" affordance when the triggering action is retryable; the affordance is keyboard-focusable.
+- Auto-dismiss after 3000 ms; fade animation takes another 500 ms before unmount.
+- `role="status"` + `aria-live="polite"` so screen readers announce the title/body politely.
+- Animations disabled under `prefers-reduced-motion: reduce` (the card just fades).
+
+**Planned upgrades:**
+- Stacking with a max of 3 concurrent toasts (oldest dismissed when exceeded). Today only one toast at a time is supported by `ToastContext`.
+- Esc dismisses the most recent.
+- "Retry" affordance on error toasts when the action is retryable.
 
 ---
 
@@ -394,9 +522,17 @@ Static content: company blurb, quick links (Home, Menu, About Us, Contact), cont
 
 **Route:** `*`
 
-**Goal:** Recover the user when they land on an unknown URL.
+**Goal:** Recover the user when they land on an unknown URL — and do so in the same design language as the rest of the app.
 
-Show a message ("This page doesn't exist") + primary CTA → `/`. No API calls; no other states needed.
+**Layout**
+
+- Full-bleed dark gradient with two drifting orbs and a centre-masked dot grid (matches the Menu / Profile heroes).
+- Pulsing-dot eyebrow ("Lost crumb").
+- Kinetic "404" headline: large white-gradient digits with the middle `0` filled with the primary→accent gradient and gently tilting (`rotate(-6deg) scale(1.04)`) on a 3.5 s ease-in-out loop. The full string is exposed to screen readers via `aria-label="404"` on the parent.
+- Supporting copy ("The page you're looking for has been eaten — or never existed.").
+- Primary CTA "Back to home" → `/` with the standard gradient pill + arrow that slides right on hover.
+
+**State coverage:** Default only. No API calls. All motion disabled under `prefers-reduced-motion: reduce`.
 
 ---
 
@@ -424,6 +560,13 @@ Show a message ("This page doesn't exist") + primary CTA → `/`. No API calls; 
 ### 4.4 ToastContext
 
 - Queue-managed (see §3.10).
+
+### 4.5 Scroll restoration
+
+- A single `<ScrollToTop />` component lives inside `<BrowserRouter>` (above `<Header />`) in `App.jsx`. It listens to `useLocation().pathname` and calls `window.scrollTo(0, 0)` on every change.
+- Behaviour is **instant** (not smooth) so route transitions feel responsive rather than laggy.
+- Hash changes (`#section` anchors) are intentionally ignored so in-page anchor links keep working.
+- This is the only place in the app that owns window scroll restoration. Individual pages must not call `window.scrollTo` on mount — it would race with this component.
 
 ---
 
@@ -493,3 +636,8 @@ These are explicitly **not** part of this spec and must not be built without an 
 | 2026-05-22 | Initial draft | First version, derived from current codebase and UI/UX best-practice rules |
 | 2026-05-22 | Home motion pass | Home page reworked with cinematic hero (orbs, kinetic typography, 3D image tilt, glass cards), scroll-progress bar, marquee, animated stats, scroll-reveal grids, mouse-spotlit final CTA. All effects respect `prefers-reduced-motion`. §3.2 expanded accordingly |
 | 2026-05-22 | Header polish | Header rebuilt as a scroll-aware frosted-glass shell with animated underlines, SVG cart icon (replaces emoji), pulse-on-change cart badge, polished user chip + animated dropdown, mobile hamburger drawer, and full a11y semantics. §3.8 expanded accordingly |
+| 2026-05-22 | Footer + Menu polish | Footer rebuilt as a dark gradient 4-column layout with SVG contact glyphs, animated link underlines, and a live "Kitchens open now" pill. Menu page rebuilt with a cinematic hero, alternating category bands, scroll-revealed cards, a frosted veg/non-veg chip that uses shape+colour (not colour alone), a proper button-based quantity stepper (fixes invalid `<div onClick>` inside `<button>`), and dedicated empty / gated / error states. Removed `console.log` calls and prop mutation (`delete item._id`) from the Menu page. §3.5 and §3.9 expanded accordingly |
+| 2026-05-22 | AuthModal fix + polish | **Bug fix:** modal was clipping to the Header because the Header's `backdrop-filter` creates a new containing block for fixed descendants. Modal now renders via `createPortal` to `document.body`. **Redesign:** dark blurred backdrop, frosted card with orb accents, gradient title, real `<label>` elements, show/hide password toggle, Enter-to-submit via form `onSubmit`, Esc-to-close, body scroll lock, disabled-with-spinner submit, real `<button>` toggle link. **Cleanups:** validation now fails on first invalid field (was returning only the last result); removed `console.log` calls; close glyph and toggle are SVG / `<button>` (no `×` unicode, no `<span onClick>`). §3.1 expanded accordingly |
+| 2026-05-22 | Cart portal fix | **Bug fix:** Cart drawer was being clipped by the Header's `backdrop-filter` containing block (same root cause as the AuthModal bug above). Cart now renders via `createPortal` to `document.body`. §3.7 amended with the portal-requirement note |
+| 2026-05-22 | Full-app design pass | Brought the rest of the app up to the new design language: Cart (full redesign — SVG glyphs replace `🛒` / `🍽️` / `×`, inline destructive confirmation replaces `window.confirm`, gradient stepper, frosted backdrop, ARIA dialog semantics, body scroll lock, Esc-to-close); ProfileCard + Profile route (banner + gradient-ring avatar + definition-list view mode + form with proper labels + spinner-on-save + Cancel reverts cleanly + in-page gated state for unauthenticated visitors); About (hero + feature card + values grid with staggered scroll-reveal); Contact (hero + 2-column grid with SVG contact glyphs — no emoji — + map card); NotFound (cinematic dark layout with kinetic gradient `0`); Toast (portal-rendered, top-right, frosted-dark with coloured icon disc and drain-bar countdown, removed `console.log` from ToastContext). §3.3, §3.4, §3.6, §3.7, §3.10, §3.11 all expanded |
+| 2026-05-22 | Scroll-to-top on route change | Added a single `<ScrollToTop />` component inside `<BrowserRouter>` that resets `window.scrollTo(0, 0)` on every `pathname` change. Hash changes are ignored so in-page anchors still work. §4.5 added |

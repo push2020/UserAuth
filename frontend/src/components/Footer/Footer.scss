@@ -1,56 +1,315 @@
+// =====================================================================
+// Footer
+// Dark gradient that blends with the Home page's final CTA, with two
+// drifting orbs in the background and a 4-column information layout.
+// =====================================================================
+
+$primary: #ff6b35;
+$primary-soft: #ff8c5a;
+$primary-deep: #e0531f;
+$accent: #ffd166;
+$ink: #0a0a0d;
+$ink-2: #16161c;
+$text-strong: #e8d4be;
+$text-mute: rgba(232, 212, 190, 0.7);
+$text-faint: rgba(232, 212, 190, 0.5);
+$line: rgba(255, 255, 255, 0.08);
+$ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
 .footer {
-  background: #222;
-  color: white;
-  padding-top: 40px;
-  margin-top: 50px;
+  position: relative;
+  background: radial-gradient(ellipse at top, #161018 0%, $ink 70%);
+  color: $text-strong;
+  overflow: hidden;
+  isolation: isolate;
+  border-top: 1px solid $line;
+}
 
-  &-container {
-    display: flex;
-    justify-content: space-around;
-    flex-wrap: wrap;
-    gap: 30px;
-    padding: 0 20px;
+.footer-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    opacity: 0.28;
   }
 
-  &-section {
-    max-width: 250px;
+  .orb-a {
+    width: 460px;
+    height: 460px;
+    background: radial-gradient(circle, $primary, transparent 60%);
+    top: -180px;
+    left: -120px;
   }
 
-  &-section h3,
-  &-section h4 {
-    margin-bottom: 15px;
-    color: #ff7e5f;
+  .orb-b {
+    width: 380px;
+    height: 380px;
+    background: radial-gradient(circle, $accent, transparent 60%);
+    bottom: -160px;
+    right: -120px;
+  }
+}
+
+.footer-container {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: clamp(48px, 7vh, 80px) clamp(16px, 4vw, 48px) clamp(32px, 5vh, 48px);
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1.4fr 1fr;
+  gap: clamp(24px, 4vw, 56px);
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  &-section p {
-    font-size: 0.9rem;
-    line-height: 1.5;
+  @media (max-width: 540px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.footer-section {
+  h4 {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: $primary;
+    font-weight: 600;
+    margin: 0 0 18px;
   }
 
-  &-section ul {
+  p {
+    color: $text-mute;
+    margin: 0 0 8px;
+    line-height: 1.6;
+    font-size: 0.95rem;
+  }
+
+  p.muted {
+    color: $text-faint;
+  }
+
+  ul {
     list-style: none;
     padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+// ---------- Brand column ----------
+
+.brand {
+  .footer-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 700;
+    font-size: 1.15rem;
+    margin-bottom: 16px;
+
+    img {
+      width: 38px;
+      height: 38px;
+      object-fit: contain;
+      filter: drop-shadow(0 6px 14px rgba(255, 107, 53, 0.45));
+    }
+
+    span {
+      background: linear-gradient(135deg, $primary, $primary-deep);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $primary;
+      outline-offset: 4px;
+      border-radius: 6px;
+    }
   }
 
-  &-section ul li {
-    margin: 8px 0;
+  p {
+    max-width: 320px;
+  }
+}
+
+// ---------- Quick links ----------
+
+.footer-section ul li a {
+  position: relative;
+  display: inline-flex;
+  color: $text-strong;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: color 0.25s $ease-out;
+
+  &:hover {
+    color: $primary-soft;
+
+    .link-underline {
+      transform: scaleX(1);
+    }
   }
 
-  &-section ul li a {
-    text-decoration: none;
-    color: white;
-    transition: color 0.3s;
+  &:focus-visible {
+    outline: 2px solid $primary;
+    outline-offset: 4px;
+    border-radius: 2px;
   }
 
-  &-section ul li a:hover {
-    color: #ff7e5f;
+  .link-underline {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -2px;
+    height: 1.5px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, $primary, $accent);
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    transition: transform 0.35s $ease-out;
+  }
+}
+
+// ---------- Contact list ----------
+// Selectors are scoped through `li` to match the specificity of the
+// `.footer-section ul li a` rule above so these styles aren't overridden.
+
+.contact-list {
+  gap: 14px;
+}
+
+.contact-list li {
+  list-style: none;
+
+  a,
+  .contact-static {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 0;
+    background: transparent;
+    border: none;
+    color: $text-strong;
+    font-size: 0.92rem;
+    line-height: 1.45;
+    word-break: break-word;
+    transition: color 0.25s $ease-out;
   }
 
-  &-bottom {
-    text-align: center;
-    background: #111;
-    padding: 15px;
+  .contact-icon {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: $primary;
+    transition: background 0.25s $ease-out, border-color 0.25s $ease-out;
+
+    svg {
+      display: block;
+    }
+  }
+
+  a:hover {
+    color: $primary-soft;
+
+    .contact-icon {
+      background: rgba(255, 107, 53, 0.18);
+      border-color: rgba(255, 107, 53, 0.36);
+    }
+  }
+
+  a:focus-visible {
+    outline: 2px solid $primary;
+    outline-offset: 4px;
+    border-radius: 4px;
+  }
+
+  .contact-static {
+    color: $text-mute;
+  }
+}
+
+// ---------- Hours column ----------
+
+.kitchen-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 6px 12px;
+  background: rgba(56, 200, 110, 0.12);
+  border: 1px solid rgba(56, 200, 110, 0.3);
+  border-radius: 999px;
+  color: #6be08c;
+  font-size: 0.82rem;
+  font-weight: 500;
+
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #6be08c;
+    box-shadow: 0 0 0 3px rgba(107, 224, 140, 0.25);
+    animation: status-pulse 2s ease-in-out infinite;
+  }
+}
+
+@keyframes status-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px rgba(107, 224, 140, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 0 7px rgba(107, 224, 140, 0);
+  }
+}
+
+// ---------- Bottom bar ----------
+
+.footer-bottom {
+  border-top: 1px solid $line;
+  padding: 20px clamp(16px, 4vw, 48px);
+  max-width: 1240px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  p {
+    margin: 0;
+    color: rgba(232, 212, 190, 0.55);
     font-size: 0.85rem;
-    margin-top: 20px;
+  }
+
+  .muted {
+    color: rgba(232, 212, 190, 0.4);
+  }
+}
+
+// ---------- Reduced motion ----------
+
+@media (prefers-reduced-motion: reduce) {
+  .kitchen-status .status-dot,
+  .footer-section ul li a,
+  .footer-section ul li a .link-underline,
+  .contact-list li a,
+  .brand .footer-logo {
+    animation: none;
+    transition: none;
   }
 }

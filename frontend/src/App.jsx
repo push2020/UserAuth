@@ -3,6 +3,7 @@ import "./Global.scss";
 import { AppRoutes } from "./routes/AppRoutes.jsx";
 import { ModalProvider } from "./context/ModalContext.jsx";
 import { Header } from "./components/Header/Header.jsx";
+import { ScrollToTop } from "./components/ScrollToTop/ScrollToTop.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { ToastProvider } from "./context/ToastContext.jsx";
 import { CartProvider } from "./context/CartContext.jsx";
@@ -14,6 +15,7 @@ function App() {
         <ModalProvider>
           <ToastProvider>
             <BrowserRouter>
+              <ScrollToTop />
               <Header />
               <AppRoutes />
             </BrowserRouter>

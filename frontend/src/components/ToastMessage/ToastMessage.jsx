@@ -1,52 +1,61 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import "./ToastMessage.scss";
 import { ic_cancel, ic_confirm, ic_progress } from "../../utils/iconSvg";
 
-const ToastMessage = ({ title, body, onClose, type = "" }) => {
-  const [visible, setVisible] = useState(true);
-  let icon = ic_confirm;
-  let iconColor = "green";
+const VISIBLE_MS = 3000;
+const FADE_MS = 500;
+
+// Maps a toast type to its icon and visual variant class.
+const variantFor = (type) => {
   switch (type) {
     case "error":
-      icon = ic_cancel;
-      iconColor = "red";
-      break;
-
+      return { icon: ic_cancel, variant: "is-error" };
     case "progress":
-      icon = ic_progress;
-      iconColor = "orange";
-      break;
-
+      return { icon: ic_progress, variant: "is-progress" };
     default:
-      break;
+      return { icon: ic_confirm, variant: "is-success" };
   }
+};
 
+// Floating notification rendered into document.body via portal so it isn't
+// clipped by any ancestor with backdrop-filter or transform.
+const ToastMessage = ({ title, body, onClose, type = "" }) => {
+  const [visible, setVisible] = useState(true);
+  const { icon, variant } = variantFor(type);
+
+  // Fades the toast out after VISIBLE_MS and removes it after the fade settles.
   useEffect(() => {
-    const fadeTimer = setTimeout(() => {
-      setVisible(false);
-    }, 3000);
-
-    const closeTimer = setTimeout(() => {
-      if (onClose) onClose();
-    }, 3500);
+    const fadeTimer = window.setTimeout(() => setVisible(false), VISIBLE_MS);
+    const closeTimer = window.setTimeout(
+      () => onClose?.(),
+      VISIBLE_MS + FADE_MS,
+    );
 
     return () => {
-      clearTimeout(fadeTimer);
-      clearTimeout(closeTimer);
+      window.clearTimeout(fadeTimer);
+      window.clearTimeout(closeTimer);
     };
   }, [onClose]);
 
-  return (
-    <div className={`toastmessage ${!visible ? "toastmessage--hide" : ""}`}>
-      <div className="toastmessage__container">
-        <div className={`toastmessage__left ${iconColor}`}>{icon}</div>
-        <div className="toastmessage__right">
-          <span className="toastmessage__right-title">{title}</span>
-          <span className="toastmessage__right-body">{body}</span>
-        </div>
+  const toast = (
+    <div
+      className={`toast ${variant}${visible ? "" : " is-hide"}`}
+      role="status"
+      aria-live="polite"
+    >
+      <span className="toast-icon" aria-hidden="true">
+        {icon}
+      </span>
+      <div className="toast-body">
+        <span className="toast-title">{title}</span>
+        {body && <span className="toast-text">{body}</span>}
       </div>
+      <span className="toast-progress" aria-hidden="true" />
     </div>
   );
+
+  return createPortal(toast, document.body);
 };
 
 export default ToastMessage;

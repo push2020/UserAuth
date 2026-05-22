@@ -1,78 +1,373 @@
+// =====================================================================
+// AuthModal
+// Portal-rendered (escapes the Header's backdrop-filter containing block),
+// dark blurred backdrop, frosted card with two glowing orbs in the bg.
+// =====================================================================
+
+$primary: #ff6b35;
+$primary-soft: #ff8c5a;
+$primary-deep: #e0531f;
+$accent: #ffd166;
+$ink: #14141a;
+$mute: #6f6f7a;
+$paper: #ffffff;
+$paper-2: #f6f4ef;
+$line: rgba(0, 0, 0, 0.08);
+$danger: #c4392f;
+$ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  inset: 0;
+  background: rgba(10, 10, 13, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: grid;
+  place-items: center;
+  padding: 20px;
   z-index: 1000;
+  animation: overlay-in 0.25s $ease-out;
+}
+
+@keyframes overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .modal-content {
-  background: white;
-  padding: 25px;
-  border-radius: 10px;
-  width: 350px;
-  max-width: 90%;
-  text-align: center;
-  animation: popup 0.3s ease-in-out;
   position: relative;
+  width: min(100%, 440px);
+  max-height: 92vh;
+  overflow-y: auto;
+  background: $paper;
+  border-radius: 24px;
+  padding: 36px clamp(24px, 5vw, 40px) 28px;
+  box-shadow:
+    0 30px 60px -20px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+  animation: modal-in 0.35s $ease-out;
+  isolation: isolate;
+  overflow-x: hidden;
 }
 
-@keyframes popup {
+@keyframes modal-in {
   from {
-    transform: scale(0.8);
     opacity: 0;
+    transform: translateY(20px) scale(0.96);
   }
   to {
-    transform: scale(1);
     opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
+
+// Decorative gradient orbs that bleed through the top corners of the card.
+.modal-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: inherit;
+
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.35;
+  }
+
+  .orb-a {
+    width: 280px;
+    height: 280px;
+    background: radial-gradient(circle, $primary, transparent 60%);
+    top: -120px;
+    left: -80px;
+  }
+
+  .orb-b {
+    width: 240px;
+    height: 240px;
+    background: radial-gradient(circle, $accent, transparent 60%);
+    top: -80px;
+    right: -80px;
+  }
+}
+
+// ---------- Close button ----------
 
 .close-btn {
   position: absolute;
-  right: 15px;
-  top: 15px;
-  background: none;
+  top: 14px;
+  right: 14px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
   border: none;
-  font-size: 20px;
-  cursor: pointer;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.04);
+  color: $ink;
+  transition: background 0.2s $ease-out, transform 0.2s $ease-out;
+
+  &:hover {
+    background: rgba(255, 107, 53, 0.1);
+    color: $primary;
+    transform: rotate(90deg);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary;
+    outline-offset: 2px;
+  }
 }
 
-.modal-content input {
-  width: 90%;
-  padding: 10px;
-  margin: 8px 0;
-  border-radius: 5px;
-  border: 1px solid #ccc;
+// ---------- Header ----------
+
+.modal-header {
+  text-align: center;
+  margin-bottom: 24px;
+
+  .modal-eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 0.72rem;
+    color: $primary;
+    font-weight: 600;
+    margin: 0 0 8px;
+  }
+
+  h2 {
+    font-size: clamp(1.4rem, 3vw, 1.7rem);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0 0 8px;
+    color: $ink;
+    background: linear-gradient(135deg, $ink 0%, #3a3a4a 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .modal-sub {
+    margin: 0;
+    color: $mute;
+    font-size: 0.92rem;
+    line-height: 1.55;
+  }
 }
+
+// ---------- Form ----------
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: $ink;
+    letter-spacing: 0.01em;
+  }
+
+  input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid $line;
+    border-radius: 12px;
+    background: $paper-2;
+    color: $ink;
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition:
+      border-color 0.25s $ease-out,
+      background 0.25s $ease-out,
+      box-shadow 0.25s $ease-out;
+
+    &::placeholder {
+      color: rgba(20, 20, 26, 0.35);
+    }
+
+    &:hover {
+      border-color: rgba(255, 107, 53, 0.3);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: $primary;
+      background: $paper;
+      box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.12);
+    }
+  }
+}
+
+.field-with-icon {
+  position: relative;
+
+  input {
+    padding-right: 44px;
+  }
+}
+
+.field-icon-btn {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: $mute;
+  transition: background 0.2s $ease-out, color 0.2s $ease-out;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.04);
+    color: $primary;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary;
+    outline-offset: 2px;
+  }
+}
+
+// ---------- Submit ----------
 
 .submit-btn {
-  width: 100px;
-  padding: 10px;
-  background: #ff6600;
+  position: relative;
+  margin-top: 8px;
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 24px;
   border: none;
-  color: white;
-  font-size: 16px;
-  margin-top: 10px;
-  border-radius: 5px;
-  cursor: pointer;
+  border-radius: 999px;
+  background: linear-gradient(135deg, $primary, $primary-soft);
+  color: $paper;
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+  box-shadow: 0 12px 28px -12px rgba(255, 107, 53, 0.6);
+  overflow: hidden;
+  transition:
+    transform 0.25s $ease-out,
+    box-shadow 0.25s $ease-out;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, $accent, $primary);
+    opacity: 0;
+    transition: opacity 0.25s $ease-out;
+  }
+
+  span {
+    position: relative;
+    z-index: 1;
+  }
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 18px 36px -12px rgba(255, 107, 53, 0.75);
+
+    &::before {
+      opacity: 1;
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid $accent;
+    outline-offset: 3px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.85;
+  }
 }
 
-.submit-btn:hover {
-  background: #e65c00;
+.spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2.5px solid rgba(255, 255, 255, 0.35);
+  border-top-color: $paper;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
 }
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// ---------- Toggle ----------
 
 .toggle-text {
-  margin-top: 10px;
-  font-size: 14px;
+  margin: 18px 0 0;
+  font-size: 0.9rem;
+  text-align: center;
+  color: $mute;
+
+  .toggle-link {
+    border: none;
+    background: transparent;
+    padding: 0;
+    color: $primary;
+    font-weight: 600;
+    font-size: inherit;
+    cursor: pointer;
+    position: relative;
+
+    &::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -2px;
+      height: 1.5px;
+      background: linear-gradient(90deg, $primary, $accent);
+      transform: scaleX(0);
+      transform-origin: 0 50%;
+      transition: transform 0.3s $ease-out;
+    }
+
+    &:hover::after,
+    &:focus-visible::after {
+      transform: scaleX(1);
+    }
+
+    &:focus-visible {
+      outline: none;
+    }
+  }
 }
 
-.toggle-text span {
-  color: #ff6600;
-  cursor: pointer;
+// ---------- Reduced motion ----------
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-overlay,
+  .modal-content,
+  .close-btn,
+  .submit-btn,
+  .submit-btn::before,
+  .field input,
+  .field-icon-btn,
+  .toggle-link::after,
+  .spinner {
+    animation: none;
+    transition: none;
+  }
 }

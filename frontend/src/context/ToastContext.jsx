@@ -9,7 +9,6 @@ export const ToastProvider = ({ children }) => {
   const [isToast, setIsToast] = useState(false);
 
   const showToast = (data) => {
-    console.log("is show toast showcased", data);
     setIsToast(data);
   };
 

@@ -1,90 +1,166 @@
-.toastmessage {
-  z-index: 1000;
-  display: flex;
-  flex-direction: row;
-  background: #141414;
-  min-width: 300px;
-  max-width: 300px;
-  border-radius: 12px;
-  position: sticky;
-  left: 40%;
-  bottom: 5%;
-  opacity: 1;
-  transition: opacity 0.5s ease-in-out;
+// =====================================================================
+// Toast notifications
+// Top-right corner, frosted dark card with a coloured icon disc and a
+// progress bar that drains over the visible window.
+// =====================================================================
 
-  &--hide {
+$primary: #ff6b35;
+$accent: #ffd166;
+$ink: #14141a;
+$paper: #ffffff;
+$success: #2d9c4d;
+$danger: #c4392f;
+$warn: #e08e2f;
+$ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+.toast {
+  position: fixed;
+  top: 88px;
+  right: 20px;
+  z-index: 1500;
+  width: min(360px, calc(100vw - 40px));
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: rgba(20, 20, 26, 0.95);
+  color: $paper;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 40px -16px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  overflow: hidden;
+  transform: translateY(0);
+  opacity: 1;
+  transition:
+    opacity 0.45s $ease-out,
+    transform 0.45s $ease-out;
+  animation: toast-in 0.4s $ease-out;
+
+  &.is-hide {
     opacity: 0;
+    transform: translateY(-12px);
     pointer-events: none;
   }
+}
 
-  &__container {
-    display: flex;
-    flex-direction: row;
-    padding: 16px;
-    gap: 12px;
-    width: 100%;
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
   }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
 
-  &__left {
-    display: flex;
-    width: 20px;
-    height: 20px;
-    border-radius: 250px;
-    align-items: center;
-    justify-content: center;
+// ---------- Icon disc ----------
 
-    &.green {
-      background: #25ab21;
-    }
+.toast-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
 
-    &.red {
-      background: #ffffff;
-      svg path {
-        fill: #f50031;
-      }
-    }
+  svg {
+    width: 18px;
+    height: 18px;
 
-    &.orange {
-      background: #ffffff;
-      svg path {
-        fill: #f06d0f;
-      }
-    }
-
-    svg {
-      width: 20px;
-      height: 20px;
-      path {
-        fill: #ffffff;
-        fill-opacity: 1;
-      }
+    path {
+      fill: $paper;
+      fill-opacity: 1;
     }
   }
+}
 
-  &__right {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+.toast.is-success .toast-icon {
+  background: $success;
+}
 
-    span {
-      color: #ffffff;
-    }
+.toast.is-error .toast-icon {
+  background: $danger;
+}
 
-    &-title {
-      font-family: sans-serif;
-      font-weight: 500;
-      font-size: 14px;
-      line-height: 20px;
-      letter-spacing: 0px;
-      flex-wrap: wrap;
-    }
-    &-body {
-      font-family: sans-serif;
-      font-weight: 400;
-      font-size: 12px;
-      line-height: 16px;
-      letter-spacing: 0px;
-      flex-wrap: wrap;
-    }
+.toast.is-progress .toast-icon {
+  background: $warn;
+
+  svg {
+    animation: toast-progress-spin 1.4s linear infinite;
+  }
+}
+
+@keyframes toast-progress-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// ---------- Body ----------
+
+.toast-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.toast-title {
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: $paper;
+}
+
+.toast-text {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.4;
+}
+
+// ---------- Progress bar ----------
+
+.toast-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: linear-gradient(90deg, $primary, $accent);
+  transform-origin: 0 50%;
+  animation: toast-drain 3000ms linear forwards;
+}
+
+@keyframes toast-drain {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+// ---------- Mobile ----------
+
+@media (max-width: 480px) {
+  .toast {
+    top: 80px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+  }
+}
+
+// ---------- Reduced motion ----------
+
+@media (prefers-reduced-motion: reduce) {
+  .toast,
+  .toast.is-progress .toast-icon svg,
+  .toast-progress {
+    animation: none;
+    transition: opacity 0.2s linear;
   }
 }
