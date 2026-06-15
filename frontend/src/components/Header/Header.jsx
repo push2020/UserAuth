@@ -203,6 +203,12 @@ export const Header = () => {
     navigate("/profile");
   };
 
+  // Closes the dropdown and navigates to the order history (dashboard) page.
+  const handleOrderHistoryNav = () => {
+    setIsProfile(false);
+    navigate("/dashboard");
+  };
+
   const itemCountLabel = `${itemCount} ${itemCount === 1 ? "item" : "items"}`;
 
   return (
@@ -289,6 +295,14 @@ export const Header = () => {
                         role="menuitem"
                       >
                         View profile
+                      </button>
+                      <button
+                        type="button"
+                        className="profile-menu-item"
+                        onClick={handleOrderHistoryNav}
+                        role="menuitem"
+                      >
+                        Order history
                       </button>
                       <button
                         type="button"

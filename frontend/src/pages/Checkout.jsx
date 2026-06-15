@@ -4,8 +4,10 @@ import "../styles/Checkout.scss";
 import { useCart } from "../context/CartContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useLocation as useDeliveryLocation } from "../context/LocationContext.jsx";
+import { useToast } from "../context/ToastContext.jsx";
 import { LocationModal } from "../components/LocationModal/LocationModal.jsx";
 import AppConstants from "../constants/AppConstants.js";
+import { apiService } from "../services/apiservice.js";
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 
@@ -56,6 +58,7 @@ export const Checkout = () => {
     openModal: openLocationModal,
   } = useDeliveryLocation();
 
+  const { showToast } = useToast();
   const [isPlacing, setIsPlacing] = useState(false);
   const [defaultImage, setDefaultImage] = useState("");
 
@@ -93,10 +96,8 @@ export const Checkout = () => {
   const deliveryAddress =
     deliveryLocation?.address || user?.address || null;
 
-  // Simulates order placement: saves order data to sessionStorage, clears the
-  // cart, and navigates to the confirmation page. A 1.4 s delay gives the
-  // spinner time to be seen (mimics a network call; replace with a real API
-  // call when the orders endpoint is available).
+  // Posts the order to the backend, stores the saved document in sessionStorage
+  // for the confirmation page, then clears the cart and navigates.
   const handlePlaceOrder = () => {
     if (!deliveryAddress) {
       openLocationModal();
@@ -115,14 +116,32 @@ export const Checkout = () => {
       total,
       address: deliveryAddress,
       estimatedMinutes: `${25 + Math.floor(Math.random() * 8)}–${35 + Math.floor(Math.random() * 5)}`,
-      placedAt: new Date().toISOString(),
     };
 
-    window.setTimeout(() => {
-      clearCart();
-      sessionStorage.setItem("lastOrder", JSON.stringify(orderData));
-      navigate("/order-confirmation");
-    }, 1400);
+    const headers = {
+      "Content-Type": "application/json",
+      authorization: AppConstants.Auth_Token,
+    };
+
+    apiService.postRequest(
+      `${AppConstants.Api_Domain}api/orders`,
+      headers,
+      JSON.stringify(orderData),
+      (res) => {
+        // Store the server's canonical order document for the confirmation page.
+        sessionStorage.setItem("lastOrder", JSON.stringify(res.data));
+        clearCart();
+        navigate("/order-confirmation");
+      },
+      () => {
+        showToast({
+          title: "Order failed",
+          body: "Something went wrong. Please try again.",
+          type: "error",
+        });
+        setIsPlacing(false);
+      }
+    );
   };
 
   if (!user || isEmpty) return null;

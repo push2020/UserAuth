@@ -599,6 +599,55 @@ A 4-column grid inside a 1240 px container. Collapses to 2 columns ≤ 900 px an
 
 ---
 
+### 3.12 Order History (Dashboard)
+
+**Route:** `/dashboard`
+
+**Goal:** Let authenticated users review every order they've placed and re-add any past order to the cart with one tap.
+
+**Data persistence**
+
+- `Checkout.jsx` — after writing the order object to `sessionStorage["lastOrder"]`, also prepends it to `localStorage["orderHistory"]` (array). The list is capped at **20 entries**; oldest are dropped when the cap is exceeded.
+- Order object shape stored per entry: `{ orderId, items[], subtotal, deliveryFee, gst, platformFee, total, address, estimatedMinutes, placedAt }`.
+- `Dashboard.jsx` — reads `localStorage["orderHistory"]` on mount and on auth state change; any JSON parse error returns an empty array silently.
+
+**Page structure**
+
+1. **Hero**: dark-gradient banner (same orb + dot-grid pattern as Menu/Checkout heroes). Eyebrow "Your orders", heading "Order history", subtitle.
+2. **Body** (overlaps hero by 40 px, `z-index: 2`):
+   - **Auth gate** — if not signed in: lock emoji, heading, sign-in CTA (calls `openModal()` from `ModalContext`; AuthModal is already mounted in `Header`).
+   - **Empty state** — if signed in but no orders: plate emoji, heading, "Browse menu" CTA → `/menu`.
+   - **Order count** — e.g. "3 orders" (small uppercase label above the grid).
+   - **Orders grid** — `auto-fill minmax(460px, 1fr)` (single column on narrow viewports).
+3. **Footer**
+
+**Order card**
+
+| Area | Content |
+|------|---------|
+| Header | Monospace order-ID pill + date/time (formatted with `toLocaleDateString` / `toLocaleTimeString`) |
+| Body | Overlapping circular image thumbnails (max 4, "+N more" badge for extras) · item name summary (comma-joined, max 3 names shown, then "+N more") · delivery address (first comma-segment, 30-char max) |
+| Footer | Price breakdown `dl` (Items / GST / Platform fee / **Total paid**) + "Re-order" button |
+
+**Re-order flow**
+
+- Iterates `order.items`; calls `addToCart(itemData, category, quantity)` for each (excludes the frontend-only `itemId` key).
+- Shows `success` toast: "Items added to cart — Head to the menu to review your cart."
+- Navigates to `/menu`.
+
+**Scroll-reveal**: `[data-reveal]` + `IntersectionObserver` (same pattern as Menu and Checkout pages). Cards 1–6 have staggered `transition-delay` in 60 ms increments.
+
+**State coverage**
+
+| State | Behaviour |
+|-------|-----------|
+| Default | Grid of order cards, newest first |
+| Empty | "No orders yet" illustration + "Browse menu" CTA |
+| Unauthenticated | Sign-in prompt; tapping "Sign in" opens the global AuthModal |
+| Error | localStorage JSON parse failure → treated as empty state (no crash) |
+
+---
+
 ### 3.11 404 / Not Found
 
 **Route:** `*`
@@ -815,3 +864,4 @@ These are explicitly **not** part of this spec and must not be built without an 
 | 2026-05-25 | Checkout + Order Confirmation | Added `/checkout` (address review, order summary, price breakdown, simulated place-order with spinner + 1.4 s delay, LocationModal integration for address edit) and `/order-confirmation` (animated SVG checkmark, green ETA banner, order ID, items list, total). "Proceed to checkout" in Cart.jsx now navigates to `/checkout`. §3.12, §3.13 added; out-of-scope list updated |
 | 2026-05-22 | Menu: search, filter, category nav, cart bar | Added sticky search + veg/non-veg filter bar (client-side `useMemo` filtering with clear button + active-state pills), scrollable sticky category nav (IntersectionObserver for active pill, smooth-scroll to section), and sticky bottom cart summary bar (slides in when cart has items, shows count + total + "View cart", opens Cart drawer). No-results state with "Clear filters" CTA. §3.5 page-structure + state-coverage updated |
 | 2026-05-22 | Delivery location feature | New `LocationContext` + `LocationModal` + Header chip. Browser geolocation → Nominatim reverse-geocode → address confirmation. Manual entry fallback. Persisted to `localStorage`; synced to user profile when signed in. Auto-opens on first visit. §3.10 and §4.5 added |
+| 2026-06-15 | Order History (Dashboard) | Filled in the stubbed `/dashboard` route with a full Order History page. `Checkout.jsx` now also writes every placed order to `localStorage["orderHistory"]` (max 20, newest first). `Dashboard.jsx` reads that array and renders a responsive card grid with order ID, timestamp, item thumbnails, address snippet, price breakdown, and a one-tap "Re-order" button that repopulates the cart. Auth-gated and empty states included. §3.12 added |

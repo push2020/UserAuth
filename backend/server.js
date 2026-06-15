@@ -14,6 +14,7 @@ import UserRouter from "./Routes/UserRouter.js";
 import ConfigRouter from "./Routes/ConfigRouter.js";
 import MenuRouter from "./Routes/MenuRouter.js";
 import CartRouter from "./Routes/CartRouter.js";
+import OrderRouter from "./Routes/OrderRouter.js";
 
 const PORT = process.env.PORT || 8080;
 
@@ -24,6 +25,7 @@ app.use(bodyParser.json());
 app.use("/auth", AuthRouter);
 app.use("/api/user", UserRouter);
 app.use("/api/cart", CartRouter);
+app.use("/api/orders", OrderRouter);
 app.use("/api", ConfigRouter);
 app.use("/menu", MenuRouter);
 
