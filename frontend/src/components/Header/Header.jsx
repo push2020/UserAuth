@@ -159,13 +159,21 @@ export const Header = () => {
   const [badgeBumped, setBadgeBumped] = useState(false);
 
   // Toggles the .is-scrolled class on the header once the page scrolls past SCROLL_THRESHOLD.
+  // Also keeps --header-h in sync so child pages can anchor sticky elements precisely.
   useEffect(() => {
-    // Updates the scrolled flag based on the current vertical scroll position.
     const handleScroll = () => setIsScrolled(window.scrollY > SCROLL_THRESHOLD);
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // +1 accounts for the 1px border-bottom that is always present on .header
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      "--header-h",
+      isScrolled ? "65px" : "73px"
+    );
+  }, [isScrolled]);
 
   // Closes the mobile nav drawer whenever the route changes so it doesn't linger between pages.
   useEffect(() => {

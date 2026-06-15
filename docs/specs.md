@@ -222,12 +222,13 @@ Static page — no API calls.
 **Page structure**
 
 1. **Menu hero** (always rendered, in every state) — full-width dark gradient banner with two drifting blurred orbs and a centre-masked dot grid. Contents: pulsing-dot eyebrow chip "Today's menu", large gradient heading, supporting copy.
-2. **Search + filter controls** — sticky bar (`top: 64px`, frosted-white backdrop-filter) containing:
+2. **Search + filter controls** — sticky bar (`top: var(--header-h)`, frosted-white backdrop-filter) containing:
    - Full-width search input (pill-shaped) with a search icon, clear button (×), and `type="search"` to suppress the browser's default cancel button via CSS.
    - Three veg-filter toggle pills: **All**, **Veg** (green active state), **Non-Veg** (red active state). Each pill uses `aria-pressed`.
    - Filtering is done entirely client-side via `useMemo`; no backend calls.
-3. **Category nav** — sticky scrollable pill strip (`top: 116px`, below the filter bar). One pill per category. Clicking a pill smooth-scrolls the page to that section (offset 190 px to clear both sticky bars). The active pill updates via an `IntersectionObserver` watching each `[data-category-section]` element; the active pill auto-scrolls into view inside the nav. Reduced-motion users get instant scroll.
-4. **Category sections** — alternate between paper (white) and paper-2 (cream) backgrounds for visual rhythm. Each `<section>` has `id={cat-${slug}}` and `data-category-section={category.name}` for the IntersectionObserver.
+   - The controls div exposes its measured height via a `ResizeObserver` that writes `--controls-h` to `:root` so the category nav can anchor accurately.
+3. **Category nav** — sticky scrollable pill strip (`top: calc(var(--header-h) + var(--controls-h))`, below the filter bar). One pill per category. Clicking a pill smooth-scrolls the page to that section (offset 190 px to clear both sticky bars). The active pill updates via an `IntersectionObserver` watching each `[data-category-section]` element; the active pill auto-scrolls into view inside the nav. Reduced-motion users get instant scroll.
+4. **Category sections** — alternate between paper (white) and paper-2 (cream) backgrounds for visual rhythm. Each `<section>` has `id={cat-${slug}}` and `data-category-section={category.name}` for the IntersectionObserver. Section elements are always full-width; `max-width: 1240px; margin-inline: auto` is applied to the inner `.category-header` and `.menu-items` children — NOT to the section itself — so content aligns consistently regardless of `nth-child` offset from non-category siblings.
 5. **Sticky cart summary bar** — fixed to the viewport bottom. Visible only when `itemCount > 0`. Slides up from below (`translateY(100%) → 0`). Shows: item count chip, divider, "View cart" label + cart icon, total price, chevron. Opens the Cart drawer. Disappears when the cart empties. The `.menu-page` adds `padding-bottom: 80px` when the bar is present so content isn't hidden.
 6. **Footer** (see §3.9).
 

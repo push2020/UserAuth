@@ -178,21 +178,19 @@ $ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 // ---------- Category sections ----------
 
 .menu-category {
+  // Full-width at section level so backgrounds always bleed edge-to-edge.
+  // Content centering lives on the children so every category aligns the same
+  // regardless of nth-child counting (which is offset by 3 non-category siblings).
   padding: clamp(48px, 8vh, 80px) clamp(16px, 4vw, 48px);
-  max-width: 1240px;
-  margin: 0 auto;
+
+  > .category-header,
+  > .menu-items {
+    max-width: 1240px;
+    margin-inline: auto;
+  }
 
   &:nth-child(even) {
     background: $paper-2;
-    max-width: none;
-    padding-inline: clamp(16px, 4vw, 48px);
-
-    > .category-header,
-    > .menu-items {
-      max-width: 1240px;
-      margin-left: auto;
-      margin-right: auto;
-    }
   }
 }
 
@@ -520,7 +518,7 @@ $ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
 .menu-controls {
   position: sticky;
-  top: 64px;
+  top: var(--header-h, 65px);
   z-index: 50;
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(14px);
@@ -638,7 +636,7 @@ $ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
 .category-nav {
   position: sticky;
-  top: 116px;
+  top: calc(var(--header-h, 65px) + var(--controls-h, 66px));
   z-index: 49;
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(14px);

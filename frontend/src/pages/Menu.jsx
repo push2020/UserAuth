@@ -169,6 +169,7 @@ export const Menu = () => {
 
   const navRef = useRef(null);
   const searchRef = useRef(null);
+  const controlsRef = useRef(null);
 
   // Fetches the menu once a signed-in user is available.
   useEffect(() => {
@@ -251,6 +252,20 @@ export const Menu = () => {
     const btn = navRef.current.querySelector(`[data-nav-cat="${activeCategory}"]`);
     btn?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
   }, [activeCategory]);
+
+  // Tracks the controls bar height so the category-nav sticky top can stay flush beneath it.
+  useEffect(() => {
+    const el = controlsRef.current;
+    if (!el) return undefined;
+    // getBoundingClientRect gives the fractional height; offsetHeight rounds to an integer
+    // and can leave a 1px subpixel gap between controls and category-nav.
+    const update = () =>
+      document.documentElement.style.setProperty("--controls-h", `${el.getBoundingClientRect().height}px`);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   // Scrolls smoothly to a category section, accounting for the sticky header + controls + nav.
   const scrollToCategory = (categoryName) => {
@@ -342,7 +357,7 @@ export const Menu = () => {
         <MenuHero />
 
         {/* ── Search + filter controls ── */}
-        <div className="menu-controls">
+        <div className="menu-controls" ref={controlsRef}>
           <div className="search-wrap">
             <span className="search-icon" aria-hidden="true"><SearchIcon /></span>
             <input
