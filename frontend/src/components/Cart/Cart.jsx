@@ -371,7 +371,11 @@ export const Cart = ({ isOpen, onClose }) => {
                 >
                   Clear cart
                 </button>
-                <button type="button" className="checkout-btn">
+                <button
+                  type="button"
+                  className="checkout-btn"
+                  onClick={() => { onClose(); navigate("/checkout"); }}
+                >
                   Proceed to checkout
                 </button>
               </div>

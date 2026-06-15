@@ -221,14 +221,22 @@ Static page — no API calls.
 
 **Page structure**
 
-1. **Menu hero** (always rendered, in every state) — full-width dark gradient banner with two drifting blurred orbs and a centre-masked dot grid. Contents:
-   - Pulsing-dot eyebrow chip "Today's menu".
-   - Large gradient heading "Explore the menu" (white → translucent white).
-   - Supporting copy.
-2. **Category sections** — alternate between paper (white) and paper-2 (cream) backgrounds for visual rhythm.
-   - Eyebrow ("Category") + name as a section header.
-   - Responsive grid (`auto-fill, minmax(260px, 1fr)`).
-3. **Footer** (see §3.9).
+1. **Menu hero** (always rendered, in every state) — full-width dark gradient banner with two drifting blurred orbs and a centre-masked dot grid. Contents: pulsing-dot eyebrow chip "Today's menu", large gradient heading, supporting copy.
+2. **Search + filter controls** — sticky bar (`top: 64px`, frosted-white backdrop-filter) containing:
+   - Full-width search input (pill-shaped) with a search icon, clear button (×), and `type="search"` to suppress the browser's default cancel button via CSS.
+   - Three veg-filter toggle pills: **All**, **Veg** (green active state), **Non-Veg** (red active state). Each pill uses `aria-pressed`.
+   - Filtering is done entirely client-side via `useMemo`; no backend calls.
+3. **Category nav** — sticky scrollable pill strip (`top: 116px`, below the filter bar). One pill per category. Clicking a pill smooth-scrolls the page to that section (offset 190 px to clear both sticky bars). The active pill updates via an `IntersectionObserver` watching each `[data-category-section]` element; the active pill auto-scrolls into view inside the nav. Reduced-motion users get instant scroll.
+4. **Category sections** — alternate between paper (white) and paper-2 (cream) backgrounds for visual rhythm. Each `<section>` has `id={cat-${slug}}` and `data-category-section={category.name}` for the IntersectionObserver.
+5. **Sticky cart summary bar** — fixed to the viewport bottom. Visible only when `itemCount > 0`. Slides up from below (`translateY(100%) → 0`). Shows: item count chip, divider, "View cart" label + cart icon, total price, chevron. Opens the Cart drawer. Disappears when the cart empties. The `.menu-page` adds `padding-bottom: 80px` when the bar is present so content isn't hidden.
+6. **Footer** (see §3.9).
+
+**Search + filter behaviour**
+
+- `filteredCategories` (derived via `useMemo`) maps over all categories, keeps items matching both the search query (case-insensitive substring) and the veg filter, then drops categories with zero matching items.
+- Changing either control triggers a re-run of the scroll-reveal IntersectionObserver so newly visible cards animate in correctly.
+- When no items match: "No dishes found" state with a clear description and a "Clear filters" button that resets both controls.
+- Search input label is visually hidden; `aria-label="Search menu items"` is set.
 
 **Item card**
 
@@ -257,7 +265,7 @@ Every `[data-reveal]` element (category headers, item cards) fades up 24 px with
 
 | State | Behaviour |
 |-------|-----------|
-| Default | Hero + alternating category sections + grid of cards |
+| Default | Hero + filter bar + category nav + alternating category sections + grid of cards. Cart bar visible when cart has ≥ 1 item |
 | Empty | `categories: []` → "Menu is being prepared. Check back soon — fresh dishes are on the way." (hero still rendered) |
 | Loading | While menu is fetching, the page shows the full-page `Loader` component centred in a 70vh wrapper. (Skeleton category sections are a planned upgrade.) |
 | Error | "We couldn't load the menu" card with a "Try again" button that resets state and re-triggers the fetch. Hero still rendered. (Cached menu retention on refresh is a planned upgrade.) |
@@ -715,13 +723,79 @@ These are non-negotiable per the referenced UI/UX rules:
 
 These are explicitly **not** part of this spec and must not be built without an amendment:
 
-- Checkout / payment flow (current "Proceed to Checkout" is a stub).
+- ~~Checkout / payment flow~~ — Checkout and Order Confirmation pages shipped (see §3.12 and §3.13). Real payment gateway and server-side order persistence are still out of scope.
 - Order history.
 - Restaurant selection / multi-vendor.
 - Reviews and ratings.
 - Push notifications.
 - Internationalisation beyond INR currency and English copy.
 - Location-based menu filtering (e.g. showing only kitchens near the saved address) — location is currently captured and persisted but not used to filter API results.
+
+---
+
+### 3.12 Checkout
+
+**Route:** `/checkout` — redirects to `/` if unauthenticated; redirects to `/menu` if cart is empty.
+
+**Goal:** Let the user review their order, confirm a delivery address, see the price breakdown, and place the order.
+
+**Layout:** Dark gradient hero banner ("Review your order") + a two-column white-card body (collapses to single column ≤ 900 px).
+
+**Left column — Order summary card**
+
+- Heading "Order summary" with an item-count badge.
+- Scrollable list of cart items: 72 × 72 image, name, category, quantity, line total.
+
+**Right column (sticky on desktop)**
+
+1. **Deliver to card** — shows `deliveryLocation.address` from `LocationContext`, falling back to `user.address`. "Change" button opens `LocationModal`. If no address is set, shows a warning and a "Set delivery address" gradient pill button.
+2. **Price details card** — Subtotal (N items), Delivery fee (Free, shown in green), Total with a dashed divider.
+3. **Place order CTA** — full-width gradient button. Shows a spinner and "Placing your order…" while in-flight (1.4 s simulated delay). Disabled during placement.
+4. Fine-print note: "Payment is collected on delivery."
+
+**Address required gate** — if no delivery address is set, clicking "Place order" opens the `LocationModal` instead of submitting.
+
+**Order placement**
+
+1. Generates an order ID (`FE-XXXXXX` random alphanumeric).
+2. Computes a random ETA (`25–33 min` range).
+3. Writes the full order object to `sessionStorage` key `lastOrder`.
+4. Calls `clearCart()`.
+5. Navigates to `/order-confirmation`.
+
+> **Note:** This is a simulated order — no `POST /api/orders` backend call is made. The orders endpoint is out of scope until the backend adds it. Replace the `setTimeout` block with a real API call when available.
+
+---
+
+### 3.13 Order Confirmation
+
+**Route:** `/order-confirmation` — redirects to `/` if `sessionStorage.lastOrder` is missing.
+
+**Goal:** Give the user a satisfying confirmation that their order is placed, with a delivery ETA and a summary they can glance at.
+
+**Visual**
+
+- Full-viewport dark radial-gradient background with three drifting orbs (primary, accent, success-green).
+- Centred white card that fades and slides up from 30 px on mount (`is-visible` class toggled after 80 ms).
+- **Animated SVG checkmark** — a green circle ring draws itself in via `stroke-dashoffset` animation (0.6 s), then the tick draws in (0.4 s after the ring). Both animations are CSS-only.
+
+**Card contents (top to bottom)**
+
+1. Animated checkmark.
+2. "Order confirmed" eyebrow + "Your food is on its way!" heading + order ID in monospace + time placed.
+3. **ETA banner** — green-tinted card with a clock icon showing the estimated delivery window ("X–Y minutes").
+4. **Delivery address** — address from the order data in a cream-tinted row.
+5. **Items ordered** — scrollable list (max-height 220 px) of item chips (thumbnail, name, × qty).
+6. **Total paid** — dashed divider + bold total.
+7. Two CTAs: "Back to home" (ghost) and "Order more" → `/menu` (gradient primary).
+
+**Data source:** reads `sessionStorage.lastOrder` (set by the Checkout page). Never re-fetches from the backend.
+
+**Accessibility**
+
+- All SVG glyphs are `aria-hidden="true"`.
+- The animated check circle is `aria-hidden="true"` — the heading "Your food is on its way!" is the accessible confirmation.
+- All animations disabled under `prefers-reduced-motion: reduce`; `stroke-dashoffset` jumps to 0 immediately.
 
 ---
 
@@ -737,4 +811,6 @@ These are explicitly **not** part of this spec and must not be built without an 
 | 2026-05-22 | Cart portal fix | **Bug fix:** Cart drawer was being clipped by the Header's `backdrop-filter` containing block (same root cause as the AuthModal bug above). Cart now renders via `createPortal` to `document.body`. §3.7 amended with the portal-requirement note |
 | 2026-05-22 | Full-app design pass | Brought the rest of the app up to the new design language: Cart (full redesign — SVG glyphs replace `🛒` / `🍽️` / `×`, inline destructive confirmation replaces `window.confirm`, gradient stepper, frosted backdrop, ARIA dialog semantics, body scroll lock, Esc-to-close); ProfileCard + Profile route (banner + gradient-ring avatar + definition-list view mode + form with proper labels + spinner-on-save + Cancel reverts cleanly + in-page gated state for unauthenticated visitors); About (hero + feature card + values grid with staggered scroll-reveal); Contact (hero + 2-column grid with SVG contact glyphs — no emoji — + map card); NotFound (cinematic dark layout with kinetic gradient `0`); Toast (portal-rendered, top-right, frosted-dark with coloured icon disc and drain-bar countdown, removed `console.log` from ToastContext). §3.3, §3.4, §3.6, §3.7, §3.10, §3.11 all expanded |
 | 2026-05-22 | Scroll-to-top on route change | Added a single `<ScrollToTop />` component inside `<BrowserRouter>` that resets `window.scrollTo(0, 0)` on every `pathname` change. Hash changes are ignored so in-page anchors still work. §4.6 added |
+| 2026-05-25 | Checkout + Order Confirmation | Added `/checkout` (address review, order summary, price breakdown, simulated place-order with spinner + 1.4 s delay, LocationModal integration for address edit) and `/order-confirmation` (animated SVG checkmark, green ETA banner, order ID, items list, total). "Proceed to checkout" in Cart.jsx now navigates to `/checkout`. §3.12, §3.13 added; out-of-scope list updated |
+| 2026-05-22 | Menu: search, filter, category nav, cart bar | Added sticky search + veg/non-veg filter bar (client-side `useMemo` filtering with clear button + active-state pills), scrollable sticky category nav (IntersectionObserver for active pill, smooth-scroll to section), and sticky bottom cart summary bar (slides in when cart has items, shows count + total + "View cart", opens Cart drawer). No-results state with "Clear filters" CTA. §3.5 page-structure + state-coverage updated |
 | 2026-05-22 | Delivery location feature | New `LocationContext` + `LocationModal` + Header chip. Browser geolocation → Nominatim reverse-geocode → address confirmation. Manual entry fallback. Persisted to `localStorage`; synced to user profile when signed in. Auto-opens on first visit. §3.10 and §4.5 added |

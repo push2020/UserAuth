@@ -1,0 +1,329 @@
+// =====================================================================
+// Order Confirmation — full-screen dark receipt design.
+// Everything lives on the dark canvas, no white card, no scroll.
+// Layout is a centred flex column that fits the viewport in one shot.
+// =====================================================================
+
+$primary: #ff6b35;
+$primary-soft: #ff8c5a;
+$accent: #ffd166;
+$ink: #0a0a0d;
+$success: #2fbd5e;
+$success-dim: rgba(47, 189, 94, 0.15);
+$glass: rgba(255, 255, 255, 0.07);
+$glass-border: rgba(255, 255, 255, 0.1);
+$ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+// ---------- Page ----------
+
+.conf-page {
+  position: relative;
+  height: calc(100vh - 72px);
+  background: radial-gradient(ellipse at 50% 0%, #1e1428 0%, $ink 65%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(14px, 2.5vh, 22px);
+  padding: 20px clamp(16px, 4vw, 32px);
+  overflow: hidden;
+  isolation: isolate;
+  color: #fff;
+
+  // All direct children slide up and fade in together on mount.
+  > * {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.55s $ease-out, transform 0.55s $ease-out;
+  }
+
+  &.is-visible > * {
+    opacity: 1;
+    transform: translateY(0);
+
+    // Stagger each child a bit for a wave effect.
+    @for $n from 1 through 8 {
+      &:nth-child(#{$n}) {
+        transition-delay: #{($n - 1) * 0.07}s;
+      }
+    }
+  }
+}
+
+// ---------- Background ----------
+
+.conf-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(90px);
+    animation: orb-drift 14s ease-in-out infinite alternate;
+  }
+
+  .orb-1 {
+    width: 420px;
+    height: 420px;
+    background: radial-gradient(circle, $primary, transparent 60%);
+    top: -160px;
+    left: -120px;
+    opacity: 0.4;
+  }
+
+  .orb-2 {
+    width: 360px;
+    height: 360px;
+    background: radial-gradient(circle, $success, transparent 60%);
+    bottom: -130px;
+    right: -100px;
+    opacity: 0.3;
+    animation-delay: -7s;
+  }
+
+  .grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 48px 48px;
+    -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 72%);
+    mask-image: radial-gradient(ellipse at center, #000 30%, transparent 72%);
+  }
+}
+
+@keyframes orb-drift {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(40px, 30px) scale(1.1); }
+}
+
+// ---------- Animated checkmark ----------
+
+.check-wrap {
+  width: clamp(64px, 10vw, 84px);
+  height: clamp(64px, 10vw, 84px);
+
+  svg { width: 100%; height: 100%; }
+
+  .check-ring {
+    fill: none;
+    stroke: $success;
+    stroke-width: 2;
+    stroke-dasharray: 166;
+    stroke-dashoffset: 166;
+    animation: ring-draw 0.65s 0.3s $ease-out forwards;
+  }
+
+  .check-tick {
+    fill: none;
+    stroke: $success;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 48;
+    stroke-dashoffset: 48;
+    animation: tick-draw 0.4s 0.85s $ease-out forwards;
+  }
+}
+
+@keyframes ring-draw { to { stroke-dashoffset: 0; } }
+@keyframes tick-draw { to { stroke-dashoffset: 0; } }
+
+// ---------- Headline ----------
+
+.conf-headline {
+  text-align: center;
+
+  .conf-label {
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    font-size: 0.7rem;
+    color: $success;
+    font-weight: 700;
+    margin: 0 0 6px;
+  }
+
+  h1 {
+    font-size: clamp(1.45rem, 3.5vw, 2rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin: 0 0 10px;
+    background: linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.72) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .conf-order-id {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 999px;
+    background: $glass;
+    border: 1px solid $glass-border;
+    font-family: monospace;
+    font-size: 0.85rem;
+    letter-spacing: 0.06em;
+    color: rgba(255, 255, 255, 0.75);
+  }
+}
+
+// ---------- ETA pill ----------
+
+.conf-eta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 22px;
+  border-radius: 999px;
+  background: $success-dim;
+  border: 1.5px solid rgba(47, 189, 94, 0.35);
+
+  .eta-icon {
+    display: grid;
+    place-items: center;
+    color: $success;
+  }
+
+  .eta-time {
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: $success;
+  }
+
+  .eta-sep {
+    width: 1px;
+    height: 22px;
+    background: rgba(47, 189, 94, 0.3);
+  }
+
+  .eta-label {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.65);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 500;
+  }
+}
+
+// ---------- Item thumbnail strip ----------
+
+.conf-thumbs {
+  display: flex;
+  align-items: center;
+}
+
+.conf-thumb {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 2.5px solid $ink;
+  overflow: hidden;
+  background: $glass;
+  margin-left: calc(var(--i, 0) * -12px);
+  position: relative;
+  z-index: calc(10 - var(--i, 0));
+  transition: transform 0.25s $ease-out;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .thumb-fallback {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, $primary, $primary-soft);
+  }
+
+  &:hover {
+    transform: translateY(-4px) scale(1.08);
+    z-index: 20;
+  }
+}
+
+.conf-thumb-more {
+  background: rgba(255, 255, 255, 0.12);
+  border: 2.5px solid rgba(255, 255, 255, 0.2);
+  display: grid;
+  place-items: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+// ---------- Total row ----------
+
+.conf-total {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 20px;
+  border-radius: 14px;
+  background: $glass;
+  border: 1px solid $glass-border;
+
+  span {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  strong {
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+}
+
+// ---------- CTAs ----------
+
+.conf-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.conf-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 22px;
+  border-radius: 999px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  transition: transform 0.25s $ease-out, box-shadow 0.25s $ease-out;
+
+  &.ghost {
+    background: $glass;
+    border: 1.5px solid $glass-border;
+    color: rgba(255, 255, 255, 0.85);
+
+    &:hover { background: rgba(255,255,255,0.12); transform: translateY(-1px); }
+  }
+
+  &.primary {
+    border: none;
+    background: linear-gradient(135deg, $primary, $primary-soft);
+    color: #fff;
+    box-shadow: 0 10px 22px -10px rgba(255, 107, 53, 0.6);
+
+    &:hover { transform: translateY(-2px); box-shadow: 0 16px 28px -10px rgba(255, 107, 53, 0.75); }
+  }
+
+  &:focus-visible { outline: 2px solid $accent; outline-offset: 3px; }
+}
+
+// ---------- Reduced motion ----------
+
+@media (prefers-reduced-motion: reduce) {
+  .conf-page > * { transition: none; opacity: 1; transform: none; }
+  .check-ring, .check-tick { animation: none; stroke-dashoffset: 0; }
+  .conf-bg .orb { animation: none; }
+  .conf-thumb { transition: none; }
+}
