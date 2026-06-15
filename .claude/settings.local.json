@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"c:\\\\Web Projects\\\\UserAuthentication\" -Recurse -Name)",
+      "Bash(Select-Object -First 50)",
+      "Bash(mkdir -p \"c:/Web Projects/UserAuthentication/docs\")"
+    ],
+    "additionalDirectories": [
+      "c:\\Web Projects\\UserAuthentication"
+    ]
+  }
+}

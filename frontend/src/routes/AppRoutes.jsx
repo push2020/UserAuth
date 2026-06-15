@@ -5,6 +5,11 @@ import { UserProfile } from "../pages/Userprofile";
 import { Dashboard } from "../pages/Dashboard";
 import { Setting } from "../pages/Setting";
 import { NotFound } from "../pages/NotFound";
+import { Menu } from "../pages/Menu";
+import { Checkout } from "../pages/Checkout";
+import { OrderConfirmation } from "../pages/OrderConfirmation";
+import AboutPage from "../pages/About";
+import ContactPage from "../pages/ContactPage";
 
 export const AppRoutes = () => {
   return (
@@ -12,7 +17,13 @@ export const AppRoutes = () => {
       <Route path="/" element={<Home />} />
       <Route path="user/:id" element={<UserProfile />} />
       <Route path="dashboard" element={<Dashboard />} />
+      <Route path="profile" element={<UserProfile />} />
       <Route path="settings" element={<Setting />} />
+      <Route path="menu" element={<Menu />} />
+      <Route path="checkout" element={<Checkout />} />
+      <Route path="order-confirmation" element={<OrderConfirmation />} />
+      <Route path="about" element={<AboutPage />} />
+      <Route path="contact" element={<ContactPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

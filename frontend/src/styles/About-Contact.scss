@@ -1,0 +1,393 @@
+// =====================================================================
+// About + Contact pages
+// Shared structure: dark gradient hero, then light content sections with
+// scroll-revealed cards. Matches the Home/Menu design language.
+// =====================================================================
+
+$primary: #ff6b35;
+$primary-soft: #ff8c5a;
+$accent: #ffd166;
+$ink: #0a0a0d;
+$ink-2: #14141a;
+$mute: #6f6f7a;
+$paper: #ffffff;
+$paper-2: #f6f4ef;
+$line: rgba(0, 0, 0, 0.06);
+$ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+.info-page {
+  background: $paper;
+  color: $ink-2;
+
+  [data-reveal] {
+    opacity: 0;
+    transform: translateY(24px);
+    transition:
+      opacity 0.8s $ease-out,
+      transform 0.8s $ease-out;
+    transition-delay: var(--reveal-delay, 0ms);
+
+    &.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+// ---------- Hero ----------
+
+.info-hero {
+  position: relative;
+  padding: clamp(64px, 12vh, 120px) clamp(16px, 4vw, 48px) clamp(48px, 8vh, 80px);
+  background: radial-gradient(ellipse at top, #1c1620 0%, $ink 60%);
+  color: #fff;
+  overflow: hidden;
+  isolation: isolate;
+  text-align: center;
+}
+
+.info-hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(90px);
+    opacity: 0.45;
+  }
+
+  .orb-1 {
+    width: 420px;
+    height: 420px;
+    background: radial-gradient(circle, $primary, transparent 60%);
+    top: -140px;
+    left: -120px;
+  }
+
+  .orb-2 {
+    width: 360px;
+    height: 360px;
+    background: radial-gradient(circle, $accent, transparent 60%);
+    bottom: -120px;
+    right: -100px;
+  }
+}
+
+.info-hero-inner {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.info-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.75);
+  margin: 0 0 18px;
+  background: rgba(255, 255, 255, 0.03);
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: $primary;
+    box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.18);
+    animation: info-dot-pulse 2s ease-in-out infinite;
+  }
+}
+
+@keyframes info-dot-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.18);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(255, 107, 53, 0);
+  }
+}
+
+.info-hero h1 {
+  font-size: clamp(2.2rem, 5.5vw, 4rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  margin: 0 0 14px;
+  background: linear-gradient(180deg, #fff 0%, rgba(255, 255, 255, 0.72) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.info-sub {
+  margin: 0 auto;
+  max-width: 600px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: clamp(1rem, 1.4vw, 1.15rem);
+  line-height: 1.6;
+}
+
+// ---------- Sections ----------
+
+.info-section {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: clamp(48px, 8vh, 80px) clamp(16px, 4vw, 48px);
+}
+
+.info-section-title {
+  font-size: clamp(1.8rem, 3.4vw, 2.4rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 32px;
+  text-align: center;
+}
+
+// ---------- Feature card (About) ----------
+
+.info-card-feature {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(20px, 4vw, 40px);
+  align-items: center;
+  background: $paper;
+  border: 1px solid $line;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.15);
+
+  @media (max-width: 800px) {
+    grid-template-columns: 1fr;
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    min-height: 280px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .info-card-body {
+    padding: clamp(24px, 4vw, 40px);
+
+    h2 {
+      font-size: clamp(1.4rem, 2.6vw, 1.9rem);
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin: 0 0 14px;
+      color: $ink-2;
+    }
+
+    p {
+      margin: 0 0 20px;
+      color: $mute;
+      line-height: 1.7;
+    }
+  }
+}
+
+.info-cta {
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 24px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, $primary, $primary-soft);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  box-shadow: 0 10px 24px -10px rgba(255, 107, 53, 0.6);
+  transition: transform 0.3s $ease-out, box-shadow 0.3s $ease-out;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 32px -10px rgba(255, 107, 53, 0.7);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $accent;
+    outline-offset: 3px;
+  }
+}
+
+// ---------- Values grid (About) ----------
+
+.values-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
+}
+
+.value-card {
+  position: relative;
+  padding: 28px 24px 24px;
+  background: $paper;
+  border: 1px solid $line;
+  border-radius: 20px;
+  transition: transform 0.4s $ease-out, box-shadow 0.4s $ease-out,
+    border-color 0.4s;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 30px 50px -28px rgba(0, 0, 0, 0.16);
+    border-color: rgba(255, 107, 53, 0.18);
+  }
+
+  .value-index {
+    display: inline-block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: $primary;
+    margin-bottom: 14px;
+  }
+
+  h3 {
+    margin: 0 0 8px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: $ink-2;
+    letter-spacing: -0.01em;
+  }
+
+  p {
+    margin: 0;
+    color: $mute;
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+}
+
+// ---------- Contact grid ----------
+
+.contact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(20px, 4vw, 32px);
+  align-items: stretch;
+
+  @media (max-width: 860px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.contact-card {
+  padding: clamp(24px, 4vw, 36px);
+  background: $paper;
+  border: 1px solid $line;
+  border-radius: 24px;
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.15);
+
+  h2 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0 0 22px;
+  }
+}
+
+.contact-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  li {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 16px;
+    background: $paper-2;
+    border-radius: 14px;
+  }
+}
+
+.row-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255, 107, 53, 0.1);
+  color: $primary;
+  flex-shrink: 0;
+}
+
+.row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.row-label {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.7rem;
+  color: $mute;
+  font-weight: 600;
+}
+
+.row-value {
+  color: $ink-2;
+  font-size: 0.95rem;
+  font-weight: 500;
+  word-break: break-word;
+}
+
+a.row-value {
+  transition: color 0.2s $ease-out;
+
+  &:hover {
+    color: $primary;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+.contact-map {
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+  min-height: 360px;
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.15);
+  border: 1px solid $line;
+
+  iframe {
+    border: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 360px;
+  }
+}
+
+// ---------- Reduced motion ----------
+
+@media (prefers-reduced-motion: reduce) {
+  .info-page [data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .info-eyebrow .dot,
+  .info-cta,
+  .value-card,
+  .row-value,
+  a.row-value {
+    animation: none;
+    transition: none;
+  }
+}

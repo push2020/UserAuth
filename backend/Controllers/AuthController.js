@@ -7,22 +7,29 @@ export const signup = async (req, res) => {
     const { name, email, password } = req.body;
     const user = await UserModel.findOne({ email });
     if (user) {
-      return res
-        .status(409)
-        .json({ status: 409, message: "User already exist", success: false });
+      return res.status(409).json({
+        code: 409,
+        message: "User already exist. Please login instead.",
+        success: false,
+      });
     }
 
     const userModel = new UserModel({ name, email, password });
     userModel.password = await bcrypt.hash(password, 10);
     await userModel.save();
 
-    res
-      .status(201)
-      .json({ status: 200, message: "SignUp successfully", success: true });
+    res.status(201).json({
+      code: 201,
+      message: "User registered successfully.",
+      success: true,
+    });
   } catch (e) {
-    res
-      .status(500)
-      .json({ status: 500, message: "Internal server error", success: false });
+    res.status(500).json({
+      code: 500,
+      message: "Internal server error. Please try again later.",
+      errormessage: e.message,
+      success: false,
+    });
   }
 };
 
@@ -31,15 +38,17 @@ export const login = async (req, res) => {
     const { email, password } = req.body;
     const user = await UserModel.findOne({ email });
     if (!user) {
-      return res
-        .status(403)
-        .json({ status: 404, message: "Password is wrong" });
+      return res.status(403).json({
+        code: 404,
+        message: "User not found. Please sign up first.",
+        success: false,
+      });
     }
     const isEqual = await bcrypt.compare(password, user.password);
     if (!isEqual) {
       return res
         .status(403)
-        .json({ status: 404, message: "Password is wrong" });
+        .json({ code: 403, message: "Invalid Password.", success: false });
     }
 
     const jwtToken = jwt.sign(
@@ -49,13 +58,22 @@ export const login = async (req, res) => {
     );
 
     res.status(200).json({
-      status: 200,
+      code: 200,
       message: "Login successful",
       jwtToken,
-      email,
-      name: user.name,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      },
+      success: true,
     });
   } catch (e) {
-    res.status(500).json({ message: "Internal server error", success: false });
+    res.status(500).json({
+      code: 500,
+      message: "Internal server error. Please try again later",
+      errormessage: e.message,
+      success: false,
+    });
   }
 };

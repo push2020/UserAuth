@@ -1,0 +1,185 @@
+# Food Express – Cursor Rules
+
+Use this file when implementing new features or modifying the codebase. Follow these conventions so existing functionality is preserved and new work fits the project's patterns.
+
+---
+
+## 1. Project overview
+
+- **Name**: Food Express (food-express-app) – food delivery app with authentication.
+- **Stack**: React (Vite) frontend, Node.js/Express backend, MongoDB (Mongoose), JWT auth.
+- **Root scripts**: `npm run dev` (both servers), `npm run server`, `npm run client`, `npm run install-all`, `npm run build`.
+- **Ports**: Backend `8080`, Frontend dev `8000` (see `frontend/vite.config.js`).
+
+---
+
+## 2. Backend
+
+### 2.1 Structure and entry
+
+- **Entry**: `backend/server.js`. Imports `./Models/db.js` (MongoDB connection), then mounts routers.
+- **ES modules**: Backend uses `"type": "module"`; use `import`/`export`, not `require`.
+
+### 2.2 Routes (mount points)
+
+- `/auth` → AuthRouter (login, signup)
+- `/api/user` → UserRouter (get user, update user, avatar)
+- `/api/cart` → CartRouter (cart CRUD; all routes require auth)
+- `/api` → ConfigRouter (`GET /api/begin` for config; requires auth)
+- `/menu` → MenuRouter (`GET /menu` for menu; requires auth)
+
+Do not change these mount paths or HTTP methods without updating the frontend (`AppConstants.Api_Domain` and all API calls).
+
+### 2.3 API response contract
+
+- Success: `res.json({ code: 200, message: "...", data?: ..., success?: true })`.
+- Error: `res.status(...).json({ code, message, errormessage?: ..., success?: false })`.
+- Auth errors: use `code: 419` for token expired; `403` for no/invalid token or user not found.
+- Keep existing `code` and `message` values for current endpoints so the frontend can rely on them (e.g. AuthContext checks `code === 419` for logout).
+
+### 2.4 Models (`backend/Models/`)
+
+- **user.js**: `name`, `email`, `password`, `phone` (Indian 10-digit), `address`, `avatar: { data: Buffer, contentType }`. Timestamps. Never expose `password` in responses; use `.select("-password")`.
+- **menu.js**: Single-doc style. Schema: `restaurantId`, `categories[]` with `name` and `items[]` (`name`, `price`, `image`, `isVeg`, `description`). Menu is fetched with `MenuModel.findOne()`.
+- **cart.js**: `userId` (ObjectId, ref users), `items[]` (CartItemSchema: `itemId`, `name`, `price`, `image`, `isVeg`, `description`, `category`, `quantity`), `restaurantId`. Virtual `totalAmount`. One cart per user (`userId` unique).
+- **config.js**: Single-doc config (banners, cuisines, featuredRestaurants, offers, faqs, footerLinks, settings, socialLinks). Fetched with `ConfigModel.findOne()`.
+- **db.js**: Connects to MongoDB via `process.env.MONGODB_URL`; loaded once from `server.js`.
+
+When adding new models or fields, preserve existing schema and defaults so current API responses stay compatible.
+
+### 2.5 Controllers (`backend/Controllers/`)
+
+- **AuthController**: `signup` (name, email, password; bcrypt hash; 409 if user exists), `login` (email, password; JWT 24h; returns `jwtToken`, `user: { id, name, email }`).
+- **UserController**: `getUser` (by id; auth required; returns user with `avatar` as path `api/user/avatar/:id` if present), `updateUser` (body + optional `req.file` for avatar; multer memory), `getAvatar` (sends buffer with Content-Type).
+- **CartController**: All use `req.user._id`. Cart item id: `generateItemId(category, item.name)` = `${category}_${itemName}`.replace(/\s+/g, "_").toLowerCase(). **Critical**: Frontend Menu and CartContext must use the same `generateItemId` logic.
+- **MenuController**: `getMenu` – `findOne()`, returns menu doc.
+- **ConfigController**: `getConfig` – `findOne()`, returns config doc.
+
+Do not change the shape of success responses (e.g. cart always returns full cart doc with `items`; auth returns `jwtToken` and `user` as above).
+
+### 2.6 Middlewares
+
+- **AuthValidation.js**: Joi `signupValidation` (name min 2, email, password min 6), `loginValidation` (email, password). Respond with 400 and `errormessage` on failure.
+- **UserValidation.js**: `userAuthentication` – reads `req.headers["authorization"]`, verifies JWT, loads `req.user` (user doc without password); 403 no token, 419 token expired. `userValidation` – Joi for update (name, email, phone Indian format, address, avatar).
+- **CartValidation.js**: `addItemValidation` (item object, category, quantity), `updateQuantityValidation` (quantity ≥ 1).
+- **upload.js**: Multer `memoryStorage()` for avatar; used as `upload.single("avatar")` on user update route.
+- **MenuValidation.js**, **ConfigValidation.js**: Same JWT auth pattern as `userAuthentication` (token required for menu and config).
+
+For new protected routes, reuse `userAuthentication` from `UserValidation.js` rather than duplicating JWT logic.
+
+### 2.7 Environment
+
+- Backend: `MONGODB_URL`, `JWT_SECRET`, `PORT` (default 8080). Optional: Cloudinary in `config/Cloudnary.js` for future use.
+
+---
+
+## 3. Frontend
+
+### 3.1 App and provider order
+
+In `App.jsx`, provider order must remain:
+
+1. AuthProvider  
+2. CartProvider (depends on useAuth)  
+3. ModalProvider  
+4. ToastProvider  
+5. BrowserRouter → Header + AppRoutes  
+
+Do not reorder or remove these; CartContext calls `useAuth()`.
+
+### 3.2 Contexts (`frontend/src/context/`)
+
+- **AuthContext**: `user`, `login`, `logout`, `updateUser`. Token in `AppConstants.Auth_Token` and `localStorage.authToken`; profile in `localStorage.userProfile`. On init, if `userProfile` exists, set token and call `getUserDetails(user._id)` (use `useEffect`, not `useState`, for this side effect). Handle API `code === 419` by calling `logout()`.
+- **CartContext**: Depends on `user`. State: `cart`, `loading`, `itemCount`. Methods: `addToCart(item, category, quantity)`, `updateQuantity(itemId, quantity)`, `removeFromCart(itemId)`, `clearCart`, `fetchCart`, `getTotalAmount()`. Cart API base: `AppConstants.Api_Domain + "api/cart"`. After each mutation, recompute `itemCount` from `res.data.items` and update `cart`.
+- **ModalContext**: `isModalOpen`, `openModal`, `closeModal` (for AuthModal).
+- **ToastContext**: `isToast`, `showToast(data)`. `data`: `{ title, body, type? }` where `type` is `"error"` or `"progress"` (or default success). Renders `ToastMessage` inside provider when `isToast` is set.
+
+When adding new context, keep it consistent with this pattern (createContext, Provider, custom hook like `useX`).
+
+### 3.3 API and constants
+
+- **apiservice.js**: Class `APIService` with `getRequest`, `postRequest`, `putRequest`, `patchRequest`, `deleteRequest(url, headers, body, successHandler, errorHandler)`. Uses `fetch`; on non-ok response calls `errorHandler` with parsed JSON; on success calls `successHandler(result)`. All auth requests must send `authorization: AppConstants.Auth_Token` where applicable.
+- **AppConstants.js**: `App_name`, `Api_Domain` (e.g. `"http://localhost:8080/"`), `Auth_Token` (set on login, cleared on logout). Do not remove or rename these; many components depend on them.
+- **validationservice.js**: Regex helpers (`isName`, `isEmail`, `isPassword`, etc.). Used by AuthModal and elsewhere; extend rather than replace.
+
+### 3.4 Routing (`frontend/src/routes/AppRoutes.jsx`)
+
+- `/` Home, `/user/:id` and `/profile` UserProfile, `/dashboard` Dashboard, `/settings` Setting, `/menu` Menu, `/about` AboutPage, `/contact` ContactPage, `*` NotFound.
+- Add new routes here; keep existing paths so links (Header, Footer, etc.) keep working.
+
+### 3.5 Component conventions
+
+- **Location**: One folder per component under `components/`, e.g. `ComponentName/ComponentName.jsx` and `ComponentName/ComponentName.scss`.
+- **Styling**: Component-specific SCSS in the same folder; import in the JSX. Global variables and base styles in `Global.scss`.
+- **Exports**: Use named exports for components (e.g. `export const Header = () => ...`) unless it’s a default-export-only component like ToastMessage or Loader.
+- **Imports**: Prefer explicit `.jsx`/`.js` extensions where the project already uses them (e.g. AuthModal, apiservice).
+
+Key components:
+
+- **Header**: Logo, nav (Home, Menu, About, Contact), cart icon (when user; badge from `useCart().itemCount`), profile dropdown (Prompt with Profile / LogOut) or Sign In opening AuthModal. Renders Cart overlay; state `isCartOpen` with `onClose`.
+- **AuthModal**: Controlled by `isOpen`, `onClose`. Login/signup toggle; uses `apiService` and `validationService`; on success sets token, fetches user, stores in localStorage, calls `login(data)` and `onClose()`. Uses `useToast` for errors/success.
+- **Cart**: Overlay; `isOpen`, `onClose`. Uses `useCart()` and `useToast()`. List of items with quantity controls and remove; footer with `getTotalAmount()`, Clear Cart, Proceed to Checkout.
+- **Footer**: Links to Home, Menu, About, Contact; static copy.
+- **Loader**: Simple spinner; used on Menu and elsewhere for loading states.
+- **ToastMessage**: Renders `title`, `body`, `type` (icon/color); auto-dismiss and `onClose` callback.
+- **ProfileCard**: Receives `user`; edit mode with FormData for `api/user/update/:id` (name, email, phone, address, avatar file). Uses `AppConstants.Api_Domain + formData.avatar` for image URL when not blob.
+
+### 3.6 Pages
+
+- **Menu.jsx**: Requires `user`; if no user, show “Please login…”. Fetches menu from `GET menu` with auth header. Uses same `generateItemId(category, item.name)` as backend. Add/subtract buttons call `addToCart`, `updateQuantity`, or `removeFromCart` via `useCart()`. Renders categories and items; item price as `₹{item.price}`.
+- **Home.jsx**: Fetches `GET api/begin` (config). Uses `homeState?.popularDishes` for categories; note backend config has `cuisines` and `featuredRestaurants` – if you add `popularDishes` to config, keep existing keys for backward compatibility.
+- **UserProfile**: Requires `user`; shows ProfileCard. Guard: “Please login to view your profile” when !user.
+- **Dashboard**, **Setting**: Placeholder pages; extend without breaking existing routes.
+- **About**, **ContactPage**: Static content and shared `About-Contact.scss`.
+- **NotFound**: 404 message and link to Home.
+
+### 3.7 Cart and menu item ID (critical)
+
+- Backend and frontend must use the same `itemId` for cart lines. Formula:  
+  `itemId = \`${category}_${item.name}\`.replace(/\s+/g, "_").toLowerCase()`  
+- In Menu, when sending item to cart, strip any `_id` from the item object (backend expects menu item shape, not MongoDB _id).  
+- Cart item shape in API: `itemId`, `name`, `price`, `image`, `isVeg`, `description`, `category`, `quantity`.
+
+### 3.8 User object shape
+
+- From API: `_id`, `name`, `email`, `phone`, `address`, and optionally `avatar` (string path like `api/user/avatar/:id`). Full URL for avatar: `AppConstants.Api_Domain + user.avatar`. Header uses `user.image || "avatar.png"` – if your API only has `avatar`, ensure Header gets the same (e.g. map `avatar` to `image` in context or use `user.avatar` in Header).
+
+### 3.9 Hooks and utils
+
+- **useOutSideClick.jsx**: Wraps children, takes `onOutsideClick` and optional `classname`; uses ref and mousedown listener. Used by Header for profile dropdown.
+- **iconSvg.jsx**: SVG icon components (ic_confirm, ic_cancel, ic_progress, etc.). Use for consistency in toasts and UI.
+
+---
+
+## 4. Adding new features (checklist)
+
+- [ ] Backend: New route under correct mount (e.g. `/api/...`); use existing middlewares (e.g. `userAuthentication`, Joi validators) where applicable.
+- [ ] Backend: Keep API response shape: `code`, `message`, and optional `data`/`errormessage`/`success`.
+- [ ] Frontend: New API calls via `apiService` with `AppConstants.Api_Domain` and auth header when needed.
+- [ ] Frontend: New routes added in `AppRoutes.jsx`; links in Header/Footer if needed.
+- [ ] New components: Folder with `ComponentName.jsx` + `ComponentName.scss`; use existing context (Auth, Cart, Toast, Modal) instead of duplicating logic.
+- [ ] Cart-related logic: Use `generateItemId` consistent with backend; do not change cart API request/response shape.
+- [ ] Auth: Token and user in AuthContext and localStorage; handle 419 by logout; do not break existing login/signup flow or AuthModal success/error handlers.
+- [ ] Config/Menu: If you add or change config or menu fields, ensure frontend that consumes them (Home, Menu) still works with existing data.
+
+---
+
+## 5. Do not change (preserve behavior)
+
+- Provider order in `App.jsx`.
+- API base path and auth header key (`authorization`).
+- JWT expiry and response codes (200, 403, 419, 404, 400, 500).
+- Cart `itemId` generation and cart item schema.
+- Signup/login request/response shape and token storage.
+- Route paths already used in Header, Footer, and redirects.
+- Existing context hook names (`useAuth`, `useCart`, `useModal`, `useToast`).
+
+---
+
+## 6. File and naming conventions
+
+- **Backend**: PascalCase for model names and controller exports; camelCase for middlewares and route files (e.g. AuthRouter.js, AuthController.js).
+- **Frontend**: PascalCase for components and pages; camelCase for hooks, utils, services, constants (e.g. apiservice.js, AppConstants.js).
+- **SCSS**: Component-scoped classes; BEM-style where used (e.g. toastmessage__container). Global variables in `Global.scss`.
+
+Following this file will keep the codebase consistent and prevent regressions when adding or changing features.

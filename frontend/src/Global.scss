@@ -1,0 +1,77 @@
+:root {
+  --primary-color: #ffffff;
+  --secondary-color: #f5f5f5;
+  --Text-Default: #141414;
+  --font-family-sans: sans-serif;
+  --value-rem: 1rem;
+  --font-size-xs: 10px;
+  --font-size-s: 0.75rem;
+  --font-size-m: 0.875rem;
+  --font-size-l: 1rem;
+  --font-size-xl: 1.125rem;
+  --font-weight-500: 500;
+  --line-height-s: 1rem;
+  --line-height-m: 1.25rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+//for images
+img {
+  width: 100%;
+  object-fit: contain;
+}
+
+//for buttons
+button {
+  cursor: pointer;
+}
+
+//for disbale
+:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+input:focus {
+  outline: none;
+}
+
+.row-reverse {
+  flex-direction: row-reverse;
+}
+
+//for text center
+.text-center {
+  text-align: center;
+}
+
+.scrollbar {
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+
+    &-thumb {
+      background: #d1d1d1;
+      border-radius: 10px;
+
+      &:hover {
+        background: #b0b0b0;
+      }
+    }
+  }
+}
+
+a {
+  text-decoration: none;
+}
