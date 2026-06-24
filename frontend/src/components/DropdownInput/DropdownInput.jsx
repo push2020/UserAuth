@@ -25,7 +25,6 @@ const DropdownInput = ({
   tooltipMessage,
   search,
   radioSelect = false,
-  ...rest
 }) => {
   const [searchTerm, setSearchTerm] = useState(search ? value : "");
   const [show, setShow] = useState(false);

@@ -159,6 +159,35 @@ $ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
 // ---------- Form ----------
 
+// Row that places the field label and "Forgot password?" link side by side.
+.field-label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+// Inline "Forgot password?" link next to the password label.
+.forgot-link {
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: $primary;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  line-height: 1;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary;
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
 .auth-form {
   display: flex;
   flex-direction: column;
@@ -310,6 +339,43 @@ $ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+// ---------- OTP boxes ----------
+
+.otp-boxes {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin: 4px 0 8px;
+}
+
+.otp-box {
+  width: 60px;
+  height: 64px;
+  border: 1.5px solid $line;
+  border-radius: 14px;
+  background: $paper-2;
+  color: $ink;
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-align: center;
+  caret-color: $primary;
+  transition:
+    border-color 0.25s $ease-out,
+    background 0.25s $ease-out,
+    box-shadow 0.25s $ease-out;
+
+  &:hover {
+    border-color: rgba(255, 107, 53, 0.3);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $primary;
+    background: $paper;
+    box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.12);
   }
 }
 

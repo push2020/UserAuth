@@ -11,6 +11,7 @@ const ASKED_KEY = "locationAsked";
 // address string built from the road, suburb, and city fields of the response.
 // Expects numeric latitude and longitude values.
 // Returns a plain string on success, or null if the request fails.
+// eslint-disable-next-line react-refresh/only-export-components
 export const reverseGeocode = async (lat, lng) => {
   const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`;
   try {
@@ -98,4 +99,5 @@ export const LocationProvider = ({ children }) => {
 };
 
 // Returns the LocationContext value. Must be called inside a LocationProvider.
+// eslint-disable-next-line react-refresh/only-export-components
 export const useLocation = () => useContext(LocationContext);

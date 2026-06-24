@@ -1,12 +1,19 @@
+import crypto from "crypto";
 import UserModel from "../Models/user.js";
+import OtpModel from "../Models/otp.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
+/**
+ * Creates a new user account after verifying the OTP sent to their email.
+ * Deletes the OTP record on success so it cannot be reused.
+ */
 export const signup = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
-    const user = await UserModel.findOne({ email });
-    if (user) {
+    const { name, email, password, otp } = req.body;
+
+    const existingUser = await UserModel.findOne({ email });
+    if (existingUser) {
       return res.status(409).json({
         code: 409,
         message: "User already exist. Please login instead.",
@@ -14,9 +21,24 @@ export const signup = async (req, res) => {
       });
     }
 
-    const userModel = new UserModel({ name, email, password });
-    userModel.password = await bcrypt.hash(password, 10);
-    await userModel.save();
+    const otpHash = crypto.createHash("sha256").update(otp).digest("hex");
+    const otpRecord = await OtpModel.findOne({
+      email,
+      otpHash,
+      expiresAt: { $gt: new Date() },
+    });
+
+    if (!otpRecord) {
+      return res.status(400).json({
+        code: 400,
+        message: "Invalid or expired verification code.",
+        success: false,
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await UserModel.create({ name, email, password: hashedPassword });
+    await OtpModel.deleteMany({ email });
 
     res.status(201).json({
       code: 201,

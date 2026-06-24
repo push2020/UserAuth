@@ -15,6 +15,11 @@ export const signupValidation = (req, res, next) => {
       "string.empty": "Password is required",
       "string.min": "Password must be at least 6 characters long",
     }),
+    otp: Joi.string().length(4).pattern(/^\d{4}$/).required().messages({
+      "string.empty": "Verification code is required",
+      "string.length": "Verification code must be 4 digits",
+      "string.pattern.base": "Verification code must be 4 digits",
+    }),
   });
 
   const { error } = schema.validate(req.body);

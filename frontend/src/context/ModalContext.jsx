@@ -1,5 +1,6 @@
-import { createContext, use, useContext, useState } from "react";
+import { createContext, useContext, useState } from "react";
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const ModalContext = createContext();
 
 export const ModalProvider = ({ children }) => {
@@ -14,4 +15,5 @@ export const ModalProvider = ({ children }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useModal = () => useContext(ModalContext);
