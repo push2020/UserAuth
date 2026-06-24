@@ -1,6 +1,6 @@
 /**
  * Use existing images already uploaded to your Cloudinary account.
- * Set these in frontend .env (see .env.example):
+ * Set these in frontend .env:
  * - VITE_CLOUDINARY_HERO_IMAGE  → Hero image URL from Cloudinary Media Library
  * - VITE_CLOUDINARY_LOGO       → Logo URL from Cloudinary Media Library
  * Leave unset to use local assets.
