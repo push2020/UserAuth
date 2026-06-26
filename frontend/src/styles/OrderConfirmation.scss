@@ -286,7 +286,9 @@ $ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
 .conf-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
+  justify-content: center;
 }
 
 .conf-btn {

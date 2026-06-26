@@ -3,6 +3,7 @@ const DICEBEAR = "https://api.dicebear.com/9.x";
 const AppConstants = {
   App_name: "Figgy",
   Api_Domain: "http://localhost:8080/",
+  Socket_Url: "http://localhost:8080",
   Auth_Token: null,
   Preset_Avatars: [
     `${DICEBEAR}/avataaars/svg?seed=Felix&backgroundColor=b6e3f4`,
