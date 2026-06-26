@@ -77,6 +77,19 @@ const OrderSchema = new Schema(
     estimatedMinutes: {
       type: String,
     },
+    status: {
+      type: String,
+      enum: ["placed", "confirmed", "preparing", "out_for_delivery", "delivered"],
+      default: "placed",
+    },
+    riderLocation: {
+      lat: { type: Number },
+      lng: { type: Number },
+    },
+    deliveryDestination: {
+      lat: { type: Number },
+      lng: { type: Number },
+    },
   },
   { timestamps: true }
 );

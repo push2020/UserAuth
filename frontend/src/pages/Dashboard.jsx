@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import "../styles/Dashboard.scss";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useCart } from "../context/CartContext.jsx";
@@ -83,6 +83,24 @@ const PinIcon = () => (
   </svg>
 );
 
+// Inline SVG map-pin glyph used on the Track button.
+const TrackIcon = () => (
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <circle cx="12" cy="12" r="3" />
+    <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+  </svg>
+);
+
 // Inline SVG refresh/re-order glyph.
 const RefreshIcon = () => (
   <svg
@@ -105,7 +123,8 @@ const RefreshIcon = () => (
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
 // Renders a single past-order card: order ID, timestamp, item thumbnails,
-// address snippet, price breakdown, and a re-order CTA.
+// address snippet, price breakdown, re-order CTA, and a track link.
+// Re-order is only shown once the order is delivered; in-progress orders show a status badge.
 const OrderCard = ({ order, onReorder }) => {
   const visibleItems = order.items.slice(0, MAX_THUMBNAILS);
   const extraCount = order.items.length - MAX_THUMBNAILS;
@@ -117,11 +136,17 @@ const OrderCard = ({ order, onReorder }) => {
   // MongoDB timestamps use createdAt; fall back to the stored placedAt for
   // orders that were created before the backend migration.
   const timestamp = order.createdAt || order.placedAt;
+  const isComplete = order.status === "delivered";
 
   return (
     <article className="order-card" data-reveal>
       <header className="order-card-header">
-        <span className="order-id-badge">{order.orderId}</span>
+        <div className="order-card-header-left">
+          <span className="order-id-badge">{order.orderId}</span>
+          <span className={`order-status-badge order-status-badge--${isComplete ? "completed" : "in-progress"}`}>
+            {isComplete ? "Completed" : "In Progress"}
+          </span>
+        </div>
         <span className="order-meta">
           <CalendarIcon />
           {formatDate(timestamp)} · {formatTime(timestamp)}
@@ -174,14 +199,26 @@ const OrderCard = ({ order, onReorder }) => {
           </div>
         </dl>
 
-        <button
-          type="button"
-          className="reorder-btn"
-          onClick={() => onReorder(order)}
-        >
-          <RefreshIcon />
-          Re-order
-        </button>
+        <div className="order-card-actions">
+          {isComplete ? (
+            <button
+              type="button"
+              className="reorder-btn"
+              onClick={() => onReorder(order)}
+            >
+              <RefreshIcon />
+              Re-order
+            </button>
+          ) : (
+            <Link
+              to={`/track-order/${order.orderId}`}
+              className="track-btn"
+            >
+              <TrackIcon />
+              Track
+            </Link>
+          )}
+        </div>
       </footer>
     </article>
   );

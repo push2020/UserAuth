@@ -783,6 +783,76 @@ These are explicitly **not** part of this spec and must not be built without an 
 
 ---
 
+### 3.14 Real-Time Order Tracking
+
+**Route:** `/track-order/:orderId` — accessible to authenticated users; redirects to `/` if token is missing.
+
+**Goal:** Let a user follow their order from placement through to delivery on a live map with a status stepper, fulfilling the Home page promise "Track your rider in real time."
+
+**Entry points**
+
+- "Track order" button on the Order Confirmation page (immediately after placing an order).
+- "Track" button on every order card in the Dashboard.
+
+**Layout (top to bottom)**
+
+1. **Sticky header** — back link ("← Orders") to `/dashboard`; order ID badge; estimated delivery time.
+2. **Map (55 svh, min 240 px)** — Leaflet + OpenStreetMap tiles (no API key required). Three markers: restaurant origin (🍽️), delivery destination (📍), rider (🛵 — visible only once `out_for_delivery`). A dashed orange `<Polyline>` connects origin to destination. Map pans smoothly to follow the rider via a `MapRecenter` sub-component.
+3. **Body** — delivery address + vertical status stepper.
+
+**Status stepper**
+
+Four steps rendered as an `<ol>`: Confirmed → Preparing Your Food → Out for Delivery → Delivered. Step state rules:
+
+| State | Icon | Style |
+|-------|------|-------|
+| Future | step emoji | Greyed out |
+| Active | step emoji + pulsing ring | Orange background, bold label |
+| Done | ✓ | Green icon + connector |
+
+**Real-time transport: Socket.IO**
+
+- Backend: `socket.js` — `Server` instance with JWT auth middleware (reads `socket.handshake.auth.token`). Client must emit `join_order <orderId>` to subscribe; server verifies the order belongs to the authenticated user before adding to the room.
+- Client: `useOrderTracking(orderId, token)` hook — connects on mount, emits `join_order`, listens for `order_update { status, riderLocation, timestamp }`, cleans up socket on unmount.
+- Initial state loaded via `GET /api/orders/:orderId` (REST) on page mount so a refresh mid-tracking restores the current status without waiting for the next socket event.
+
+**Rider simulation (backend)**
+
+After each order is saved, `simulateOrderProgress(orderId, destination)` fires a chain of `setTimeout` calls:
+
+| Delay | Event |
+|-------|-------|
+| 5 s | `confirmed` — saved to DB + emitted |
+| 30 s | `preparing` — saved to DB + emitted |
+| 90 s | `out_for_delivery` — saved to DB + emitted; rider location loop starts |
+| 90–170 s | 10 location steps every 8 s — linear interpolation from restaurant to destination |
+| 180 s | `delivered` — saved to DB + emitted |
+
+Restaurant origin is fixed (Pune: 18.5204, 73.8567). Delivery destination is derived deterministically from the `orderId` string so the route is consistent across page reloads.
+
+**Order model additions**
+
+`status` (enum: `placed | confirmed | preparing | out_for_delivery | delivered`, default `placed`), `riderLocation { lat, lng }`, `deliveryDestination { lat, lng }`.
+
+**State coverage**
+
+| State | Behaviour |
+|-------|-----------|
+| Default | Map centred on restaurant; status stepper shows current step; socket connected |
+| Loading | Full-page spinner while initial REST fetch is in flight |
+| Error | "Could not load order" message + link to `/dashboard` |
+| Null fields | `riderLocation` null → rider marker hidden; `deliveryDestination` null → falls back to restaurant coords |
+| Unauthenticated | `navigate("/", { replace: true })` on mount if no auth token |
+| Delivered | All stepper steps show ✓; rider marker at destination; map stays interactive |
+
+**Accessibility**
+
+- Map is decorative — all meaningful status information is in the stepper `<ol>`.
+- Stepper is an `<ol aria-label="Order status">` with `<li>` per step.
+- Active step has a CSS pulsing ring that is `aria-hidden="true"`.
+
+---
+
 ### 3.12 Checkout
 
 **Route:** `/checkout` — redirects to `/` if unauthenticated; redirects to `/menu` if cart is empty.
@@ -809,11 +879,12 @@ These are explicitly **not** part of this spec and must not be built without an 
 
 1. Generates an order ID (`FE-XXXXXX` random alphanumeric).
 2. Computes a random ETA (`25–33 min` range).
-3. Writes the full order object to `sessionStorage` key `lastOrder`.
-4. Calls `clearCart()`.
-5. Navigates to `/order-confirmation`.
+3. Calls `POST /api/orders` (JWT required) to persist the order.
+4. Writes the response to `sessionStorage` key `lastOrder`.
+5. Calls `clearCart()`.
+6. Navigates to `/order-confirmation`.
 
-> **Note:** This is a simulated order — no `POST /api/orders` backend call is made. The orders endpoint is out of scope until the backend adds it. Replace the `setTimeout` block with a real API call when available.
+After the order is saved, the backend automatically begins the status simulation (see §3.14).
 
 ---
 
@@ -865,3 +936,4 @@ These are explicitly **not** part of this spec and must not be built without an 
 | 2026-05-22 | Menu: search, filter, category nav, cart bar | Added sticky search + veg/non-veg filter bar (client-side `useMemo` filtering with clear button + active-state pills), scrollable sticky category nav (IntersectionObserver for active pill, smooth-scroll to section), and sticky bottom cart summary bar (slides in when cart has items, shows count + total + "View cart", opens Cart drawer). No-results state with "Clear filters" CTA. §3.5 page-structure + state-coverage updated |
 | 2026-05-22 | Delivery location feature | New `LocationContext` + `LocationModal` + Header chip. Browser geolocation → Nominatim reverse-geocode → address confirmation. Manual entry fallback. Persisted to `localStorage`; synced to user profile when signed in. Auto-opens on first visit. §3.10 and §4.5 added |
 | 2026-06-15 | Order History (Dashboard) | Filled in the stubbed `/dashboard` route with a full Order History page. `Checkout.jsx` now also writes every placed order to `localStorage["orderHistory"]` (max 20, newest first). `Dashboard.jsx` reads that array and renders a responsive card grid with order ID, timestamp, item thumbnails, address snippet, price breakdown, and a one-tap "Re-order" button that repopulates the cart. Auth-gated and empty states included. §3.12 added |
+| 2026-06-25 | Real-time order tracking | Socket.IO transport (JWT auth, per-order rooms). Order model extended with `status`, `riderLocation`, `deliveryDestination`. Backend simulates full lifecycle (confirmed → preparing → out_for_delivery with 10 live rider-location steps → delivered) over ~3 minutes after placement. New `/track-order/:orderId` page with Leaflet/OSM map (restaurant, rider, destination markers + dashed polyline) and animated status stepper. "Track order" added to Order Confirmation; "Track" button added to each Dashboard order card. `dotenv/config` import moved to first line of `server.js` to fix ES-module env-var loading order. §3.14 added; §3.12 Checkout order-placement updated (real API call replaces simulated flow) |

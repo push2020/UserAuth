@@ -32,6 +32,15 @@ const MenuIcon = () => (
   </svg>
 );
 
+const TrackIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+    strokeLinejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="3" />
+    <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+  </svg>
+);
+
 // Animated SVG checkmark — ring draws in, tick follows.
 const AnimatedCheck = () => (
   <div className="check-wrap" aria-hidden="true">
@@ -130,7 +139,10 @@ export const OrderConfirmation = () => {
         <Link to="/" className="conf-btn ghost">
           <HomeIcon /><span>Back to home</span>
         </Link>
-        <Link to="/menu" className="conf-btn primary">
+        <Link to={`/track-order/${order.orderId}`} className="conf-btn primary">
+          <TrackIcon /><span>Track order</span>
+        </Link>
+        <Link to="/menu" className="conf-btn ghost">
           <MenuIcon /><span>Order more</span>
         </Link>
       </div>

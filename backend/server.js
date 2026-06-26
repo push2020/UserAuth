@@ -1,13 +1,11 @@
+// Must be the very first import so .env is loaded before any other module reads process.env.
+import "dotenv/config";
+
+import { createServer } from "http";
 import express from "express";
-import dotenv from "dotenv";
 import cors from "cors";
 import bodyParser from "body-parser";
-
-dotenv.config();
-
-// Load Cloudinary config (must run after dotenv.config)
 import "./config/Cloudnary.js";
-
 import "./Models/db.js";
 import AuthRouter from "./Routes/AuthRouter.js";
 import UserRouter from "./Routes/UserRouter.js";
@@ -15,10 +13,12 @@ import ConfigRouter from "./Routes/ConfigRouter.js";
 import MenuRouter from "./Routes/MenuRouter.js";
 import CartRouter from "./Routes/CartRouter.js";
 import OrderRouter from "./Routes/OrderRouter.js";
+import { initSocket } from "./socket.js";
+import { reconcileStaleOrders } from "./Controllers/OrderController.js";
 
 const PORT = process.env.PORT || 8080;
 
-var app = express();
+const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
@@ -29,6 +29,10 @@ app.use("/api/orders", OrderRouter);
 app.use("/api", ConfigRouter);
 app.use("/menu", MenuRouter);
 
-app.listen(PORT, () => {
+const server = createServer(app);
+initSocket(server);
+
+server.listen(PORT, () => {
   console.log(`listening port ${PORT}`);
+  reconcileStaleOrders();
 });

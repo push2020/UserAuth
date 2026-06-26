@@ -11,6 +11,7 @@ import { OrderConfirmation } from "../pages/OrderConfirmation";
 import AboutPage from "../pages/About";
 import ContactPage from "../pages/ContactPage";
 import { ResetPassword } from "../pages/ResetPassword";
+import { TrackOrder } from "../pages/TrackOrder";
 
 export const AppRoutes = () => {
   return (
@@ -23,6 +24,7 @@ export const AppRoutes = () => {
       <Route path="menu" element={<Menu />} />
       <Route path="checkout" element={<Checkout />} />
       <Route path="order-confirmation" element={<OrderConfirmation />} />
+      <Route path="track-order/:orderId" element={<TrackOrder />} />
       <Route path="about" element={<AboutPage />} />
       <Route path="contact" element={<ContactPage />} />
       <Route path="reset-password" element={<ResetPassword />} />
