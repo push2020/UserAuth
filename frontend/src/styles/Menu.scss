@@ -16,6 +16,7 @@ $paper-2: #f6f4ef;
 $line: rgba(0, 0, 0, 0.06);
 $veg: #2d9c4d;
 $non-veg: #c4392f;
+$fav: #e8395b;
 $ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
 // Extra bottom padding when the sticky cart bar is visible so content
@@ -333,6 +334,55 @@ $ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   }
 }
 
+// ---------- Favourite button (heart icon on card image) ----------
+
+.fav-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: $mute;
+  box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  transition:
+    transform 0.25s $ease-out,
+    color 0.25s $ease-out,
+    background 0.25s $ease-out,
+    box-shadow 0.25s $ease-out;
+
+  &:hover {
+    transform: scale(1.12);
+    color: $fav;
+    background: #fff;
+    box-shadow: 0 6px 18px -6px rgba(232, 57, 91, 0.4);
+  }
+
+  &.is-fav {
+    color: $fav;
+    animation: fav-pop 0.38s $ease-out;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $fav;
+    outline-offset: 2px;
+  }
+}
+
+@keyframes fav-pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.38); }
+  70%  { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
 .menu-item-body {
   padding: 16px 18px 18px;
   display: flex;
@@ -632,6 +682,54 @@ $ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   &:focus-visible { outline: 2px solid $primary; outline-offset: 2px; }
 }
 
+// ---------- Favourites filter pill ----------
+
+.fav-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1.5px solid $line;
+  background: $paper-2;
+  color: $mute;
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.22s $ease-out;
+
+  &:hover {
+    border-color: rgba(232, 57, 91, 0.35);
+    color: $ink;
+  }
+
+  &.is-active {
+    border-color: $fav;
+    background: rgba(232, 57, 91, 0.08);
+    color: $fav;
+  }
+
+  .fav-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: rgba(232, 57, 91, 0.15);
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: $fav;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $fav;
+    outline-offset: 2px;
+  }
+}
+
 // ---------- Category nav ----------
 
 .category-nav {
@@ -786,6 +884,8 @@ $ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   .cart-bar,
   .cat-pill,
   .veg-pill,
+  .fav-btn,
+  .fav-filter-btn,
   .search-input {
     animation: none;
     transition: none;

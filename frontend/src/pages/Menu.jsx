@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "../styles/Menu.scss";
 import AppConstants from "../constants/AppConstants.js";
 import { apiService } from "../services/apiservice.js";
@@ -74,7 +74,44 @@ const ChevronRightIcon = () => (
   </svg>
 );
 
+// Renders a filled or outlined heart depending on isFilled.
+const HeartIcon = ({ isFilled }) => (
+  <svg width="16" height="16" viewBox="0 0 24 24"
+    fill={isFilled ? "currentColor" : "none"}
+    stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+    strokeLinejoin="round" aria-hidden="true">
+    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+  </svg>
+);
+
 // ── Sub-components ────────────────────────────────────────────────────────────
+
+// Persists a Set of favourite item IDs to localStorage and exposes a toggle.
+const useFavourites = () => {
+  const [favourites, setFavourites] = useState(() => {
+    try {
+      const stored = localStorage.getItem("menu_favourites");
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+
+  const toggleFavourite = useCallback((id) => {
+    setFavourites((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      localStorage.setItem("menu_favourites", JSON.stringify([...next]));
+      return next;
+    });
+  }, []);
+
+  return { favourites, toggleFavourite };
+};
 
 // Three-segment quantity stepper. Renders an "Add" pill at count 0,
 // then [−][count][+] once an item is in the cart.
@@ -102,8 +139,8 @@ const QuantityControl = ({ count, onAdd, onSubtract, itemName }) => {
   );
 };
 
-// Single menu item card with image, veg chip, name, price and quantity control.
-const MenuItemCard = ({ item, defaultImage, count, onAdd, onSubtract }) => {
+// Single menu item card with image, veg chip, heart button, name, price, and quantity control.
+const MenuItemCard = ({ item, defaultImage, count, onAdd, onSubtract, isFavourite, onToggleFavourite }) => {
   // Falls back to the menu-wide default image if the item image URL is broken.
   const handleImageError = (e) => {
     if (e.target.src !== defaultImage) e.target.src = defaultImage;
@@ -121,6 +158,15 @@ const MenuItemCard = ({ item, defaultImage, count, onAdd, onSubtract }) => {
           </span>
           {item.isVeg ? "Veg" : "Non-Veg"}
         </span>
+        <button
+          type="button"
+          className={`fav-btn${isFavourite ? " is-fav" : ""}`}
+          onClick={onToggleFavourite}
+          aria-label={isFavourite ? `Remove ${item.name} from favourites` : `Add ${item.name} to favourites`}
+          aria-pressed={isFavourite}
+        >
+          <HeartIcon isFilled={isFavourite} />
+        </button>
       </div>
       <div className="menu-item-body">
         <h3>{item.name}</h3>
@@ -166,6 +212,9 @@ export const Menu = () => {
   const [vegFilter, setVegFilter] = useState("all");
   const [activeCategory, setActiveCategory] = useState(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [showFavourites, setShowFavourites] = useState(false);
+
+  const { favourites, toggleFavourite } = useFavourites();
 
   const navRef = useRef(null);
   const searchRef = useRef(null);
@@ -182,7 +231,7 @@ export const Menu = () => {
     );
   }, [user]);
 
-  // Filters menu categories by the current search query and veg/non-veg toggle.
+  // Filters menu categories by search query, veg/non-veg toggle, and favourites flag.
   // Returns only categories that have at least one matching item.
   const filteredCategories = useMemo(() => {
     if (!menu?.categories) return [];
@@ -195,11 +244,12 @@ export const Menu = () => {
           const matchesVeg =
             vegFilter === "all" ||
             (vegFilter === "veg" ? item.isVeg === true : item.isVeg === false);
-          return matchesSearch && matchesVeg;
+          const matchesFav = !showFavourites || favourites.has(generateItemId(cat.name, item.name));
+          return matchesSearch && matchesVeg && matchesFav;
         }),
       }))
       .filter((cat) => cat.items.length > 0);
-  }, [menu, searchQuery, vegFilter]);
+  }, [menu, searchQuery, vegFilter, showFavourites, favourites]);
 
   // Re-runs scroll reveal whenever filtered categories or search/filter state changes
   // so newly rendered cards are observed by the IntersectionObserver.
@@ -390,6 +440,19 @@ export const Menu = () => {
               </button>
             ))}
           </div>
+          <button
+            type="button"
+            className={`fav-filter-btn${showFavourites ? " is-active" : ""}`}
+            onClick={() => setShowFavourites((v) => !v)}
+            aria-pressed={showFavourites}
+            aria-label={`${showFavourites ? "Hide" : "Show"} favourites${favourites.size > 0 ? `, ${favourites.size} saved` : ""}`}
+          >
+            <HeartIcon isFilled={showFavourites} />
+            Favourites
+            {favourites.size > 0 && (
+              <span className="fav-count" aria-hidden="true">{favourites.size}</span>
+            )}
+          </button>
         </div>
 
         {/* ── Category nav ── */}
@@ -416,19 +479,31 @@ export const Menu = () => {
             <p>Check back soon — fresh dishes are on the way.</p>
           </div>
         ) : !hasResults ? (
-          <div className="menu-no-results">
-            <p className="no-results-emoji" aria-hidden="true">🔍</p>
-            <h3>No dishes found</h3>
-            <p>
-              {searchQuery
-                ? `No results for "${searchQuery}"${vegFilter !== "all" ? ` in ${vegFilter}` : ""}. Try a different search.`
-                : `No ${vegFilter} dishes available right now.`}
-            </p>
-            <button type="button" className="primary-btn"
-              onClick={() => { setSearchQuery(""); setVegFilter("all"); }}>
-              Clear filters
-            </button>
-          </div>
+          showFavourites && favourites.size === 0 ? (
+            <div className="menu-no-results">
+              <p className="no-results-emoji" aria-hidden="true">🤍</p>
+              <h3>No favourites yet</h3>
+              <p>Tap the heart icon on any dish to save it here.</p>
+              <button type="button" className="primary-btn"
+                onClick={() => setShowFavourites(false)}>
+                Browse menu
+              </button>
+            </div>
+          ) : (
+            <div className="menu-no-results">
+              <p className="no-results-emoji" aria-hidden="true">🔍</p>
+              <h3>No dishes found</h3>
+              <p>
+                {searchQuery
+                  ? `No results for "${searchQuery}"${vegFilter !== "all" ? ` in ${vegFilter}` : ""}. Try a different search.`
+                  : `No ${vegFilter} dishes available right now.`}
+              </p>
+              <button type="button" className="primary-btn"
+                onClick={() => { setSearchQuery(""); setVegFilter("all"); }}>
+                Clear filters
+              </button>
+            </div>
+          )
         ) : (
           filteredCategories.map((category) => (
             <section
@@ -449,6 +524,8 @@ export const Menu = () => {
                     count={getItemQuantity(category.name, item)}
                     onAdd={() => handleAdd(item, category.name)}
                     onSubtract={() => handleSubtract(item, category.name)}
+                    isFavourite={favourites.has(generateItemId(category.name, item.name))}
+                    onToggleFavourite={() => toggleFavourite(generateItemId(category.name, item.name))}
                   />
                 ))}
               </div>
